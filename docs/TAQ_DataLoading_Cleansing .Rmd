@@ -1,0 +1,122 @@
+---
+title: "TAQ Data Loading and Cleansing"
+output: html_document
+---
+
+See following links for more info:
+
+http://people.stern.nyu.edu/jhasbrou/Teaching/PrinciplesSecTrade/TAQ/taqExercise1.html
+
+http://highfrequency.herokuapp.com/index.html
+
+```{r echo=FALSE, message = FALSE, warning=FALSE}
+library(zoo)
+library(xts)
+library(highfrequency)
+library(Defaults)
+library(TTR)
+library(quantmod)
+library(timeDate)
+
+conversionRequired = FALSE;
+setwd("/Users/nick/Documents/RStudioProjects/Dissertation/code")
+datasource = "/Users/nick/Documents/RStudioProjects/Dissertation/data/raw";
+datadestination = "/Users/nick/Documents/RStudioProjects/Dissertation/data/xts";
+datadestination_cleaned = "/Users/nick/Documents/RStudioProjects/Dissertation/data/xts_cleaned";
+```
+
+```{r}
+from = "2014-03-04";
+to = "2014-03-04";
+
+tickers = c("ACW", "ALG","HZO","ITG")
+
+tradeColNames <- c("DATE","TIME_M","EX","SYMBOL","SYM_SUFFIX","COND","SIZE","PRICE","TR_STOPIND","CORR","TR_SEQNUM","TR_SOURCE","TR_RF")
+
+quoteColNames <- c("DATE","TIME_M","EX","SYMBOL","SYM_SUFFIX","BID","BIDSIZ","OFR","OFRSIZ","QU_COND","BIDEX","ASKEX","QU_SEQNUM","NATBBO_IND","NASDBBO_IND","QU_CANCEL","QU_SOURCE")
+
+```
+
+###Data Loading
+```{r warning=FALSE}
+if(conversionRequired){
+  #TODO: check the source of the G127 NA errors
+  suppressWarnings(
+    convert(from, to, datasource, datadestination, trades=TRUE,
+          quotes=TRUE,ticker=tickers, dir=FALSE, extension="csv",
+          header=TRUE,tradecolnames=tradeColNames,quotecolnames=quoteColNames,
+          format="%Y%m%d %H:%M:%OS")
+  )
+}
+
+options("digits.secs"=3); #Shows milliseconds
+tdata = TAQLoad(tickers="HZO", from=from, to=to, trades=T, quotes=F, 
+                       datasource=datadestination)
+
+qdata = TAQLoad(tickers="HZO", from=from, to=to, trades=F, quotes=T, 
+                       datasource=datadestination)
+
+head(tdata)
+
+head(qdata)
+```
+
+###Data Cleanup and Outlier Removal
+```{r}
+#TODO: investigate R timezone handling (low priority)
+
+tdata = tradesCleanup(tdataraw = tdata,exchanges="D", report = FALSE)
+qdata = quotesCleanup(qdataraw = qdata,exchanges="T", report = FALSE, maxi=25) #be a bit more aggressive in cleaning up quotes with abnormally large spreads (default is 50)
+
+tdataAfterFinalCleanup = tradesCleanupFinal(qdata = qdata, tdata = tdata)
+```
+
+###Matching Trades and Quotes
+```{r}
+tqdata = matchTradesQuotes(tdataAfterFinalCleanup,qdata);
+
+plot.xts(tqdata[, "PRICE"], type = "bars")
+lines(tqdata[, "OFR"], col="red")
+lines(tqdata[, "BID"], col="green")
+```
+
+
+###Liquidity Measures
+
+- Inferred trade direction
+
+A vector which has values 1 or (-1) if the inferred trade direction is buy or sell respectively.
+
+```{r}
+tradeDirections = getTradeDirection(tqdata)
+plot(tradeDirections)
+```
+
+- Effective Spread
+
+$\mbox{effective spread}_t = 2*D_t*(\mbox{PRICE}_{t} - \frac{(\mbox{BID}_{t}+\mbox{OFR}_{t})}{2}),$
+
+```{r}
+effectiveSpread = tqLiquidity(tqdata,type="es")
+plot(effectiveSpread)
+```
+
+- Realised Spread
+
+$\mbox{realized spread}_t = 2*D_t*(\mbox{PRICE}_{t} - \frac{(\mbox{BID}_{t+300}+\mbox{OFR}_{t+300})}{2})$
+
+where $D_t$ is 1 (-1) if $trade_t$ was buy (sell) (see Boehmer (2005), Bessembinder (2003)). Note that the time indication of $\mbox{BID}$ and $\mbox{OFR}$ refers to the registered time of the quote in seconds.
+
+```{r}
+realisedSpread = tqLiquidity(tqdata,tdata,qdata,type="rs")
+plot(realisedSpread)
+```
+
+- Price Impact
+
+$\mbox{price impact}_t = \frac{\mbox{effective spread}_t - \mbox{realized spread}_t}{2}$
+
+```{r}
+price_impact = tqLiquidity(tqdata,tdata,qdata,type="price_impact")
+plot(price_impact)
+```

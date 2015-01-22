@@ -38,7 +38,7 @@ qdata = quotesCleanup(qdataraw = qdata,exchanges="T", report = FALSE)
 
 tqdata = matchTradesQuotes(tdata,qdata);
 
-plot(x = tqdata[, "PRICE", "BID", "OFR"])
+#plot(x = tqdata[, "PRICE", "BID", "OFR"])
 
 plot.xts(tqdata[, "PRICE"], type = "bars")
 lines(tqdata[, "OFR"], col="red")

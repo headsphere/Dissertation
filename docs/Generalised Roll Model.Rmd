@@ -1,0 +1,51 @@
+---
+title: "Generalised Roll Model"
+output: html_document
+---
+
+The unobserved efficient prices ($m_t$) follow the dynamics:
+
+$m_t = m_{t-1} + w_t$
+
+$w_t = \lambda q_t + u_t$
+
+$q_t$ is in indicator variable indicating where it was a buy (1) or a sell (0)
+
+$\lambda q_t$ reflects the information content of the trade at time $t$. Can be considered as the cost of adverse selection
+
+The observed trade prices ($p_t$) follow the model:
+
+$p_t = m_t + cq_t$
+
+$c$ reflects the dealer's costs
+
+Trade prices can be simluated as follows:
+
+```{r}
+
+nObs = 10000
+c = 1
+lambda = 2
+sdu = 1
+
+m = as.numeric()
+q = as.numeric()
+u = as.numeric()
+p = as.numeric()
+t = as.numeric()
+
+for (i in 1:nObs)
+  {
+  q[i] = sign(rnorm(1))
+  u[i] = rnorm(1, sd = sdu)
+  m[i] = ifelse(i == 1, 0, m[i-1]) + lambda * q[i] + u[i]
+  p[i] = m[i] + c * q[i]
+  t[i] = i
+  }
+
+df = data.frame(m, t, q, u, p)
+head(df)
+
+plot(p)
+```
+
