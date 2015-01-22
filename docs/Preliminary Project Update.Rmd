@@ -1,5 +1,5 @@
 ---
-title: "Preliminary Project Update v2"
+title: "Preliminary Project Update"
 author: "Nicholas Head"
 date: "January 11, 2015"
 output: 
