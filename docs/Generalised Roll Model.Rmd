@@ -4,7 +4,7 @@ output: html_document
 ---
 
 The unobserved efficient prices ($m_t$) follow the dynamics:
-
+ 
 $m_t = m_{t-1} + w_t$
 
 $w_t = \lambda q_t + u_t$
