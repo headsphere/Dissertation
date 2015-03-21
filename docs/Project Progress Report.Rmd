@@ -1,0 +1,39 @@
+---
+title: "Project Progress Report"
+author: "Nick Head"
+date: "21 March 2015"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    highlight: pygments
+    number_sections: true
+---
+
+##Problem Background
+
+Outline of VPIN and what it is trying to resolve. 
+
+Explain economic justification for VPIN
+
+Outline algorithm for computing VPIN (http://rof.oxfordjournals.org/content/suppl/2014/09/25/rfu041.DC1/Web_appedix.pdf) 
+
+Brief outline of controversy
+
+##Work to Date
+
+Literature review
+
+Data cleansing and preparation
+
+##Plan for Remaining Work
+
+Simulation Study
+
+- Write code to generate VPIN metric from simulated trade data 
+
+- Parameter inference via Hidden Markov Model (HMM) and Expectation-Maximisation (EM) [JUSTIFY THIS APPROACH]
+
+Empirical data analysis
+
+- Test predictive power with known market crashes e.g flash crash
