@@ -12,7 +12,11 @@ output:
 
 ##Problem Background
 
-Outline of VPIN and what it is trying to resolve. 
+###Outline of VPIN and what it is trying to resolve. 
+
+VPIN is an extension of the PIN model developed by O'Hara and Easley used to identify the probability of information based trading. That is if one is a non-informed participant such as a market-maker, what is the probability that you are dealing with an informed trader, and hence become subject to adverse selection. This is a critical metric for market makers as it enables them to set appropriate bid-ask prices such that the spread compensates them for the probability of dealing with an insider.
+
+For this reason PIN has been used as a metric to measure the extent of so-called order-flow toxicity. As toxicity increases spreads will widen, thereby reducing liquidity provisioning. To the extreme, this can cause markets to completely fail. An example of this is the famous 2010 Flash Crash  
 
 Explain economic justification for VPIN
 
