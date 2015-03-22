@@ -14,15 +14,17 @@ output:
 
 ###Outline of VPIN and what it is trying to resolve. 
 
-VPIN is an extension of the PIN model developed by O'Hara and Easley used to identify the probability of information based trading. That is if one is a non-informed participant such as a market-maker, what is the probability that you are dealing with an informed trader, and hence become subject to adverse selection. This is a critical metric for market makers as it enables them to set appropriate bid-ask prices such that the spread compensates them for the probability of dealing with an insider.
+VPIN is an extension of the PIN model developed by O'Hara, Lopez and Easley (hereafter known as ELO)  used to identify the probability of information based trading. That is if one is a non-informed participant such as a market-maker, what is the probability that you are dealing with an informed trader, and hence become subject to adverse selection. This is a critical metric for market makers as it enables them to set appropriate bid-ask prices such that the spread compensates them for the probability of dealing with an insider.
 
-For this reason PIN has been used as a metric to measure the extent of so-called order-flow toxicity. As toxicity increases spreads will widen, thereby reducing liquidity provisioning. To the extreme, this can cause markets to completely fail. An example of this is the famous 2010 Flash Crash  
+For this reason PIN has been used as a metric to measure the extent of so-called order flow toxicity. If the order flow becomes too toxic, market makers are forced out of the market. As they withdraw, liquidity disappears, which increases even more the concentration of toxic flow in the overall volume, which triggers a feedback mechanism that forces even more market makers out. This cascading effect has caused hundreds of liquidity-induced crashes in past, the 2010 Flash Crash being one (major) example of it. One hour before the flash crash, order flow toxicity was at historically high levels relative to recent history. [^2010flashcrash] ELO claim that using the VPIN metric, this crash could have been predicted one hour before it actually happened.
 
-Explain economic justification for VPIN
+The theoretical underpinning for VPIN is based off inferring toxicity from trade imbalances using so-called volume synchronised time bars. This  necessitates using a trade classification algorithm to identify trades as either buys or sells. The procedure has been controversial however with several papers by Andersen and Bondarenko refuting the claims made by ELO. 
+
+VPIN's theory is consistent with the anecdotal evidence reported by the joint SEC-CFTC study on the events of May 6, 2010. Given the relevance of these findings, the S.E.C. requested an independent study to be carried out by the Lawrence Berkeley National Laboratory. This Government laboratory concluded:[^Leinweber]
+
+>This [VPIN] is the strongest early warning signal known to us at this time.
 
 Outline algorithm for computing VPIN (http://rof.oxfordjournals.org/content/suppl/2014/09/25/rfu041.DC1/Web_appedix.pdf) 
-
-Brief outline of controversy
 
 ##Work to Date
 
@@ -41,3 +43,7 @@ Simulation Study
 Empirical data analysis
 
 - Test predictive power with known market crashes e.g flash crash
+
+[^2010flashcrash]: https://en.wikipedia.org/wiki/2010_Flash_Crash
+
+[^Leinweber]: Leinweber, D. et al. (2011): "Federal Market Information Technology in the Post Flash Crash Era: Roles for Supercomputing" (http://ssrn. com/abstract=1939522)
