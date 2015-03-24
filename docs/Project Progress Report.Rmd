@@ -36,6 +36,8 @@ Data cleansing and preparation
 
 Simulation Study
 
+- Simulate Trade Data using sequential trade model. Summarily, denote a security's price as $\S$. Its present value is $S_1$. However, once a certain amount of new information has been incorporated into the price, S will be either $S_B$ (bad news) or $S_G$ (good news). There is a probability $\alpha$ that new information will arrive within the time-frame of the analysis, and a probability $\delta$￼ that the news will be bad (i.e.,1 - $\delta$ ￼ that the news will be good).   
+
 - Write code to generate VPIN metric from simulated trade data 
 
 - Parameter inference via Hidden Markov Model (HMM) and Expectation-Maximisation (EM) [JUSTIFY THIS APPROACH]
