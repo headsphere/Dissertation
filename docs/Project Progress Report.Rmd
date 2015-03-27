@@ -1,18 +1,16 @@
 ---
-title: "Project Progress Report"
-author: "Nick Head"
-date: "21 March 2015"
+title: "Preliminary Project Update"
+author: "Nicholas Head"
+date: "January 11, 2015"
 output: 
-  html_document:
-    toc: true
-    theme: united
-    highlight: pygments
-    number_sections: false
+  rmarkdown::tufte_handout:
+    highlight: tango
+
 ---
 
-##Problem Background
+#Problem Background
 
-###Outline of VPIN and what it is trying to resolve. 
+##Outline of VPIN and what it is trying to resolve. 
 
 VPIN is an extension of the PIN model developed by O'Hara, Lopez and Easley (hereafter known as ELO)  used to identify the probability of information based trading. That is if one is a non-informed participant such as a market-maker, what is the probability that you are dealing with an informed trader, and hence become subject to adverse selection. This is a critical metric for market makers as it enables them to set appropriate bid-ask prices such that the spread compensates them for the probability of dealing with an insider.
 
@@ -38,7 +36,7 @@ Simulation Study
 
 - The first task is to identify whether the proposed Hidden Markov Model will execute the parameter estimation correctly. Specifically I will seek to identify whether the HMM can correctly identify the hidden intraday market states and from there conclude whether VPIN is an accurate measure of those states. To this end I will perform a simulation analysis where the hidden states are known beforehand (in terms of the sequential trade model parameters)
 
-- The simple sequential trade model is as follows. Denote a security's price as $S$. Its present value is $S_1$. Once a certain amount of new information has been incorporated into the price, S will be either $S_B$ (bad news) or $S_G$ (good news). There is a probability $\alpha$ that new information will arrive within the time-frame of the analysis, and a probability $\delta$￼ that the news will be bad (i.e.,1 - $\delta$ ￼ that the news will be good).  
+- The simple sequential trade model is as follows. Denote a security's price as $S$. Its present value is $S_1$. Once a certain amount of new information has been incorporated into the price, S will be either $S_B$ (bad news) or $S_G$ (good news). There is a probability $\alpha$ that new information will arrive within the time-frame of the analysis, and a probability $\delta$ that the news will be bad  (i.e., $1 - \delta$ that the news will be good).  
 TODO: Flesh this out.
 
 - To cater for the real-time intraday nature of the VPIN metric I will have to extend the sequential trade model to take into account the time-varying nature of the data[^timevarying]. TODO: Flesh this out.
