@@ -44,9 +44,21 @@ Simulation Study
   \includegraphics{images/sequential_trade_model}
 \end{figure*}
 
-- To cater for the real-time intraday nature of the VPIN metric I will have to extend the sequential trade model to take into account the time-varying nature of the data[^timevarying]. Instead of calculating liquidity based off clock-time, VPIN uses what is called volume-time, whereby trades are placed into equally sized buckets each with a uniform amount of volume. The intuition behind this is that in a high-frequency environment, these volume bars will be spaced out widely when there is little information-based trading, and packed tightly when there is a higher amount. The idea is that more relevant is a piece of information, more volume it will attract. Within each of these bars the number of trades that are buys or sells are inferred, and then VPIN is calculated as the degree of imbalance between buys and sells. The dynamics of buys and sells are driven by the sequential trade model parameters mentioned previously ($\alpha$, $\delta$, $\mu$ and $\epsilon$).  
+- To cater for the real-time intraday nature of the VPIN metric I will have to extend the sequential trade model to take into account the time-varying nature of the data[^timevarying]. Instead of calculating liquidity based off clock-time, VPIN uses what is called volume-time, whereby trades are placed into equally sized buckets each with a uniform amount of volume. The intuition behind this is that in a high-frequency environment, these volume bars will be spaced out widely when there is little information-based trading, and packed tightly when there is a higher amount. The idea is that more relevant is a piece of information, more volume it will attract. Within each of these bars the number of trades that are buys or sells are inferred, and then VPIN is calculated as the degree of imbalance between buys and sells. If we have $\tau = 1,2,... n$ volume buckets, within each bucket trades are classified as buys $V_{\tau}^B$, and sells $V_{\tau}^S$ where $V = V_{\tau}^B + V_{\tau}^S$ for each $\tau$. The dynamics of buys and sells are driven by the sequential trade model parameters mentioned previously ($\alpha$, $\delta$, $\mu$ and $\epsilon$). The expected arrival rate of informed trade becomes: $E[V_{\tau}^B - V_{\tau}^S] = \alpha \mu(2 \delta - 1)$ and the absolute expected values is $E[|V_{\tau}^B - V_{\tau}^S|] = \alpha \mu$.
 
-- To simulate the volume bars across the course of a hypothetical trading day I generate data according to the following procedure: Generate a Bernouilly random variable with parameter $\alpha$ to determine whether an information event has ocurred within this volume bar. Then generate a second Bernouilly R.V. with parameter $\delta$ to determine whether the event was a 'good' or a 'bad' information event. According to the sequential trade model we then simulate the number of buys and sells for the volume bar using Possion R.V.s. This is repeated for the total number of expected volume bars for the trading days, then this hypothetical day can be simulated a large number of times in order to calculate an expected VPIN value.  
+- The total expected arrival rate is:
+
+$$\frac{1}{n}\sum_{\tau = 1}^n (V_{\tau}^B + V_{\tau}^S) = V = $$
+
+$$\underbrace{\alpha (1 - \delta) (\epsilon + \mu + \epsilon) }_\text{Volume from good news} + \underbrace{\alpha \delta (\mu + \epsilon + \epsilon) }_\text{Volume from bad news} + \underbrace{(1 - \alpha) (\epsilon + \epsilon) }_\text{Volume from no news} = \alpha \mu + 2 \epsilon$$
+
+- VPIN is then calculated as:
+
+$$VPIN = \frac{\alpha \mu}{\alpha \mu + 2 \epsilon} = \frac{\alpha \mu}{V} = \frac{\sum_{\tau = 1}^n (V_{\tau}^S - V_{\tau}^B)}{(2 \delta - 1)n V} \approx  \frac{\sum_{\tau = 1}^n |V_{\tau}^S - V_{\tau}^B|}{n V}$$
+
+- To simulate the volume bars across the course of a hypothetical trading day I generate data according to the following procedure: Generate a Bernouilly random variable with parameter $\alpha$ to determine whether an information event has ocurred within this volume bar. Then generate a second Bernouilly R.V. with parameter $\delta$ to determine whether the event was a 'good' or a 'bad' information event. According to the sequential trade model we then simulate the number of buys and sells for the volume bar using Possion R.V.s. This is repeated for the total number of expected volume bars for the trading days, then this hypothetical day can be simulated a large number of times in order to calculate an expected VPIN value. The code to generate mate carlo simulations of the volume bars has been outlined in Appendix A.  
+
+
 
 - This simulated data will then be modelled as an HMM and the hidden states will be subsequently decoded using the EM algorithm. I antocipate that EM will be an appropriate algorithm to use as it is designed to cater for 'missing data' scenarios. If EM is found to be unsatisfactory, MLE may be used as a fallback.
 
@@ -62,6 +74,79 @@ Further tasks then are:
 - To see whether these extreme hidden states are exclusively associated with these liquidity crashes or is there are large number of false positives.   
 
 - Does VPIN indeed predict these crashes or is it simply describing them as they happen.
+
+#Appendix A: Monte-Carlo Simulation of Volume Buckets
+
+```{r}
+finv <- function(u,p)
+{
+#  return (qnorm(u, mean = p))
+#  return (qpois(u, p))
+  return (rpois(1, p))
+}
+
+numSim = 1000
+Vpin = numeric(numSim)
+
+V = 50 #size of each volume bucket
+n = 100 #number of volume buckets
+
+alpha = 0.5 #probability of information event
+delta = 0.4 #probability of bad news event
+mu = 10 #arrival rate of informed trader
+epsilon = (V - alpha * mu)/2 #arrival rate of uninformed trader
+
+s = 1
+while(s < numSim){
+
+  Vbuy = numeric(n) #buy volume buckets
+  Vsell = numeric(n) #sell volume buckets
+  
+  j = 1
+ 
+ while(j <= n){
+    
+    u1 = runif(1)
+    u2 = runif(1)
+    u3 = runif(1)
+    
+    if(u1 < alpha){ #we have an information event 
+      
+      if(u2 < delta){ #its a bad news event
+        
+        #only uninformed traders buy when there's bad news
+        Vbuy[j] = finv(u3, epsilon)  
+        
+        #both informed and uninformed traders sell when there's bad news
+        Vsell[j] = finv(u3, mu + epsilon)
+      }
+      else{ #its a good news event
+        
+        #both informed and uninformed traders buy when there's good news
+        Vbuy[j] = finv(u3, mu + epsilon)
+        
+        #only uninformed traders sell when there's good news
+        Vsell[j] = finv(u3, epsilon)
+      }
+    }
+    else{
+      #no information event
+      
+      #uninformed traders buy and sell in equal quantities 
+      Vbuy[j] = finv(u3, epsilon)
+      Vsell[j] = Vbuy[j]
+    }
+    
+    j = j + 1
+  }
+  
+  Vpin[s] = sum(abs(Vbuy - Vsell)) / sum(Vbuy + Vsell)
+  
+  s = s + 1
+}
+meanVpin = sum(Vpin)/numSim
+varVpin =  sum(Vpin^2)/(numSim - 1) - (sum(Vpin)/(numSim * (numSim - 1)))^2
+```
 
 [^2010flashcrash]: https://en.wikipedia.org/wiki/2010_Flash_Crash
 
