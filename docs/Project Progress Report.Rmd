@@ -58,7 +58,24 @@ $$VPIN = \frac{\alpha \mu}{\alpha \mu + 2 \epsilon} = \frac{\alpha \mu}{V} = \fr
 
 - To simulate the volume bars across the course of a hypothetical trading day I generate data according to the following procedure: Generate a Bernouilly random variable with parameter $\alpha$ to determine whether an information event has ocurred within this volume bar. Then generate a second Bernouilly R.V. with parameter $\delta$ to determine whether the event was a 'good' or a 'bad' information event. According to the sequential trade model we then simulate the number of buys and sells for the volume bar using Possion R.V.s. This is repeated for the total number of expected volume bars for the trading days, then this hypothetical day can be simulated a large number of times in order to calculate an expected VPIN value. The code to generate Monte Carlo simulations of the volume bars has been outlined in Appendix A.  
 
-- A further extension of the basic model is one where the arrival rates of informed and uninformed trades are time-varying. Following the results of Easley, Engle, O'Hara and Wu (2008)[^timevarying] we can model the arrival rates as a bivariate vector autoregressive process
+- A further extension of the basic model is one where the arrival rates of informed and uninformed trades are time-varying. Following the results of Easley, Engle, O'Hara and Wu (2008)[^timevarying] the arrival rates can be modelled as a bivariate vector autoregressive process where $(\alpha \mu_t, 2 \epsilon_t)'$ contains the time-$(t - 1)$ forecast of the arrival rates at time $t$, $b_{t-1}$ and $s_{t-1}$ are observed buy and sell orders at time $t-1$, $\odot$ denotes the Hadamard product, the vector
+$g = (g_1, g_2)'$ captures the growth rates of the two intensities, $\omega$ is a $2 \times 1$ parameter vector and $\phi$ and $\psi$ are $2 \times 2$ parameter matrices:
+
+$$\begin{pmatrix}
+  \alpha \mu_t \\
+  2 \epsilon_t 
+ \end{pmatrix} = \omega \odot e^{g(t-1)} + \phi 
+ \begin{bmatrix}
+   \begin{pmatrix}
+    \alpha \mu_{t-1} \\
+    2 \epsilon_{t-1} 
+   \end{pmatrix} \odot e^{g(t-1)}
+ \end{bmatrix}
+ + \psi 
+ \begin{pmatrix}
+  |b_{t-1} - s_{t-1}| \\
+  b_{t-1} + s_{t-1} - |b_{t-1} - s_{t-1}| \epsilon_t 
+ \end{pmatrix}$$
 
 - This simulated data will then be modelled as an HMM and the hidden states will be subsequently decoded using the EM algorithm. I antocipate that EM will be an appropriate algorithm to use as it is designed to cater for 'missing data' scenarios. If EM is found to be unsatisfactory, MLE may be used as a fallback.
 
