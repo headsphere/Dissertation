@@ -2,6 +2,8 @@
 title: "Preliminary Project Update"
 author: "Nicholas Head"
 date: "January 11, 2015"
+header-includes:
+   - \usepackage{algorithm2e}
 output: 
   rmarkdown::tufte_handout:
     highlight: tango
@@ -44,7 +46,38 @@ Simulation Study
   \includegraphics{images/sequential_trade_model}
 \end{figure*}
 
-- To cater for the real-time intraday nature of the VPIN metric I will have to extend the sequential trade model to take into account the time-varying nature of the data[^timevarying]. Instead of calculating liquidity based off clock-time, VPIN uses what is called volume-time, whereby trades are placed into equally sized buckets each with a uniform amount of volume. The intuition behind this is that in a high-frequency environment, these volume bars will be spaced out widely when there is little information-based trading, and packed tightly when there is a higher amount. The idea is that more relevant is a piece of information, more volume it will attract. Within each of these bars the number of trades that are buys or sells are inferred, and then VPIN is calculated as the degree of imbalance between buys and sells. If we have $\tau = 1,2,... n$ volume buckets, within each bucket trades are classified as buys $V_{\tau}^B$, and sells $V_{\tau}^S$ where $V = V_{\tau}^B + V_{\tau}^S$ for each $\tau$. The dynamics of buys and sells are driven by the sequential trade model parameters mentioned previously ($\alpha$, $\delta$, $\mu$ and $\epsilon$). The expected arrival rate of informed trade becomes: $E[V_{\tau}^B - V_{\tau}^S] = \alpha \mu(2 \delta - 1)$ and the absolute expected values is $E[|V_{\tau}^B - V_{\tau}^S|] = \alpha \mu$.
+- To cater for the real-time intraday nature of the VPIN metric I will have to extend the sequential trade model to take into account the time-varying nature of the data[^timevarying]. Instead of calculating liquidity based off clock-time, VPIN uses what is called volume-time, whereby trades are placed into equally sized buckets each with a uniform amount of volume. The intuition behind this is that in a high-frequency environment, these volume bars will be spaced out widely when there is little information-based trading, and packed tightly when there is a higher amount. The idea is that more relevant is a piece of information, more volume it will attract. Within each of these bars the number of trades that are buys or sells are inferred, and then VPIN is calculated as the degree of imbalance between buys and sells. If we have $\tau = 1,2,... n$ volume buckets, within each bucket trades are classified as buys $V_{\tau}^B$, and sells $V_{\tau}^S$ where $V = V_{\tau}^B + V_{\tau}^S$ for each $\tau$. 
+
+- Rather than using the Tick-rule, Lee-Ready or other trade classification techniques, ELO propose a new volume classification method called Bulk Volume Classification. This departs from standard trade classification schemes in two ways: First, volume is classified in bulk, and second this methodology classifies part of a bar's volume as buy, and the remainder as sell. Empirical studies have shown Bulk Volume Classification to be more accurate than the Tick-rule, despite of not requiring level-1 tick data (only bars)[^bulkclassifiction]. Within a volume bucket, the amount of volume classified as buy is
+
+\begin{equation} \label{eq:vol_buy}
+V_{\tau}^B = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}}\right)
+\end{equation}
+
+where $t(\tau)$ is the index of the last (volume or time) bar included in bucket $\tau$, $V_{\tau}^B$ is the buy volume (traded against the Ask), $V_i$ is the total volume per bucket, $Z$ is the Standard Normal Distribution, and $\sigma_{\Delta S}$ is the standard deviation of price changes betwenen (volume or time) bars. Because all buckets contain the same amount of volume $V$, 
+
+\begin{equation} \label{eq:vol_sell}
+V_{\tau}^S = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i \left( 1 - Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}} \right) \right) = V - V_{\tau}^B
+\end{equation}
+
+\begin{algorithm}[H]
+ \KwData{Time series of transactions of a particular instrument\;
+ asd}
+ \KwResult{how to write algorithm with \LaTeX2e }
+ initialization\;
+ \While{not at end of this document}{
+  read current\;
+  \eIf{understand}{
+   go to next section\;
+   current section becomes this one\;
+   }{
+   go back to the beginning of current section\;
+  }
+ }
+ \caption{How to write algorithms}
+\end{algorithm}
+
+- The dynamics of buys and sells are driven by the sequential trade model parameters mentioned previously ($\alpha$, $\delta$, $\mu$ and $\epsilon$). The expected arrival rate of informed trade becomes: $E[V_{\tau}^B - V_{\tau}^S] = \alpha \mu(2 \delta - 1)$ and the absolute expected values for sufficiently large $\mu$ is $E[|V_{\tau}^B - V_{\tau}^S|] \approx \alpha \mu$.
 
 - The total expected arrival rate is:
 
@@ -77,7 +110,7 @@ $$\begin{pmatrix}
   b_{t-1} + s_{t-1} - |b_{t-1} - s_{t-1}| \epsilon_t 
  \end{pmatrix}$$
 
-- This simulated data will then be modelled as an HMM and the hidden states will be subsequently decoded using the EM algorithm. I antocipate that EM will be an appropriate algorithm to use as it is designed to cater for 'missing data' scenarios. If EM is found to be unsatisfactory, MLE may be used as a fallback.
+- This simulated data will then be modelled as an HMM and the hidden states will be subsequently decoded using the EM algorithm. I anticipate that EM will be an appropriate algorithm to use as it is designed to cater for 'missing data' scenarios. If EM is found to be unsatisfactory, MLE may be used as a fallback.
 
 
 Empirical data analysis
@@ -91,6 +124,8 @@ Further tasks then are:
 - To see whether these extreme hidden states are exclusively associated with these liquidity crashes or is there are large number of false positives.   
 
 - Does VPIN indeed predict these crashes or is it simply describing them as they happen.
+
+\pagebreak
 
 #Appendix A: Monte-Carlo Simulation of Volume Buckets
 
@@ -172,3 +207,5 @@ varVpin =  sum(Vpin^2)/(numSim - 1) - (sum(Vpin)/(numSim * (numSim - 1)))^2
 [^timevarying]: Easley, D., Engle, R. F., O’hara, M., & Wu, L. (2008). Time-varying arrival rates of informed and uninformed trades. Journal of Financial Econometrics, 6, 171–207. doi:10.1093/jjfinec/nbn003
 
 [^tradeclassifiction]: Chakrabarty, B., Pascual, R., & Shkilko, A. (2012). Trade Classification Algorithms : A Horse Race between the Bulk-based and the Tick-based Rules.
+
+[^bulkclassifiction]: Easley, D., Lopez de Prado, M. M., & O’Hara, M. (2012). Bulk Classification of Trading Activity. SSRN Electronic Journal. doi:10.2139/ssrn.1989555
