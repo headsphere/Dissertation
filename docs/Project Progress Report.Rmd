@@ -60,41 +60,7 @@ where $t(\tau)$ is the index of the last (volume or time) bar included in bucket
 V_{\tau}^S = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i \left( 1 - Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}} \right) \right) = V - V_{\tau}^B
 \end{equation}
 
-
-\begin{algorithm}[H]
- \KwData{
-\begin{enumerate}
-  \item Time series of transactions of a particular instrument ($T_i$, $P_i$, $V_i$)
-    \begin{enumerate}
-    \item $T_i$: Time of the trade.
-    \item $P_i$: Price at which securities were exchanged.
-    \item $V_i$: Volume exchanged
-    \end{enumerate}
-  \item $V$: Volume size (determined by user of the formula)
-  \item $n$: Sample of volume buckets used in the estimation.
-\end{enumerate}
- \tcc{Pi, Vi, V, n are all integer values. Ti is any time translation, in integer or double format, sequentially increasing as chronological time passes.}}
- \KwResult{Prepare Equal Volume Buckets }
-  \begin{enumerate}
-   \item Sort transactions by time ascending: $T_{i+1} \geq T_i, \forall i$
-   \item Compute $\Delta P_i, \forall i$
-   \item Expand the number of observations by repeating each observation $\Delta P_i$ as many times as $V_i$. This generates a total of $I = \sum_i V_i$ observations $\Delta P_i$.
-   \item Re-index $\Delta P_i$ observations, $i = 1, ...,I$
-   \item Initiate counter: $\tau = 0$
-   \item Add one unit to $\tau$
-   \item If $I \lt \tau V$, jump to step 11 (there are insufficient observations)
-  \end{enumerate}
- \While{not at end of this document}{
-  read current\;
-  \eIf{understand}{
-   go to next section\;
-   current section becomes this one\;
-   }{
-   go back to the beginning of current section\;
-  }
- }
- \caption{How to write algorithms}
-\end{algorithm}
+The algorithm to compute the VPIN metric is in Appendix A.
 
 - The dynamics of buys and sells are driven by the sequential trade model parameters mentioned previously ($\alpha$, $\delta$, $\mu$ and $\epsilon$). The expected arrival rate of informed trade becomes: $E[V_{\tau}^B - V_{\tau}^S] = \alpha \mu(2 \delta - 1)$ and the absolute expected values for sufficiently large $\mu$ is $E[|V_{\tau}^B - V_{\tau}^S|] \approx \alpha \mu$.
 
@@ -108,7 +74,7 @@ $$\underbrace{\alpha (1 - \delta) (\epsilon + \mu + \epsilon) }_\text{Volume fro
 
 $$VPIN = \frac{\alpha \mu}{\alpha \mu + 2 \epsilon} = \frac{\alpha \mu}{V} = \frac{\sum_{\tau = 1}^n (V_{\tau}^S - V_{\tau}^B)}{(2 \delta - 1)n V} \approx  \frac{\sum_{\tau = 1}^n |V_{\tau}^S - V_{\tau}^B|}{n V}$$
 
-- To simulate the volume bars across the course of a hypothetical trading day I generate data according to the following procedure: Generate a Bernouilly random variable with parameter $\alpha$ to determine whether an information event has ocurred within this volume bar. Then generate a second Bernouilly R.V. with parameter $\delta$ to determine whether the event was a 'good' or a 'bad' information event. According to the sequential trade model we then simulate the number of buys and sells for the volume bar using Possion R.V.s. This is repeated for the total number of expected volume bars for the trading days, then this hypothetical day can be simulated a large number of times in order to calculate an expected VPIN value. The code to generate Monte Carlo simulations of the volume bars has been outlined in Appendix A.  
+- To simulate the volume bars across the course of a hypothetical trading day I generate data according to the following procedure: Generate a Bernouilly random variable with parameter $\alpha$ to determine whether an information event has ocurred within this volume bar. Then generate a second Bernouilly R.V. with parameter $\delta$ to determine whether the event was a 'good' or a 'bad' information event. According to the sequential trade model we then simulate the number of buys and sells for the volume bar using Possion R.V.s. This is repeated for the total number of expected volume bars for the trading days, then this hypothetical day can be simulated a large number of times in order to calculate an expected VPIN value. The code to generate Monte Carlo simulations of the volume bars has been outlined in Appendix B.  
 
 - A further extension of the basic model is one where the arrival rates of informed and uninformed trades are time-varying. Following the results of Easley, Engle, O'Hara and Wu (2008)[^timevarying] the arrival rates can be modelled as a bivariate vector autoregressive process where $(\alpha \mu_t, 2 \epsilon_t)'$ contains the time-$(t - 1)$ forecast of the arrival rates at time $t$, $b_{t-1}$ and $s_{t-1}$ are observed buy and sell orders at time $t-1$, $\odot$ denotes the Hadamard product, the vector
 $g = (g_1, g_2)'$ captures the growth rates of the two intensities, $\omega$ is a $2 \times 1$ parameter vector and $\phi$ and $\psi$ are $2 \times 2$ parameter matrices:
@@ -146,7 +112,49 @@ Further tasks then are:
 
 \pagebreak
 
-#Appendix A: Monte-Carlo Simulation of Volume Buckets
+#Appendix A: Algorithm to Compute the VPIN Metric
+\begin{algorithm}[H]
+ \KwData{
+\begin{enumerate}
+  \item Time series of transactions of a particular instrument ($T_i$, $P_i$, $V_i$)
+    \begin{enumerate}
+    \item $T_i$: Time of the trade.
+    \item $P_i$: Price at which securities were exchanged.
+    \item $V_i$: Volume exchanged
+    \end{enumerate}
+  \item $V$: Volume size (determined by user of the formula)
+  \item $n$: Sample of volume buckets used in the estimation.
+\end{enumerate}
+ \tcc{Pi, Vi, V, n are all integer values. Ti is any time translation, in integer or double format, sequentially increasing as chronological time passes.}}
+ \KwResult{Prepare Equal Volume Buckets }
+  \begin{enumerate}
+   \item Sort transactions by time ascending: $T_{i+1} \geq T_i, \forall i$
+   \item Compute $\Delta P_i, \forall i$
+   \item Expand the number of observations by repeating each observation $\Delta P_i$ as many times as $V_i$. This generates a total of $I = \sum_i V_i$ observations $\Delta P_i$.
+   \item Re-index $\Delta P_i$ observations, $i = 1, ...,I$
+   \item Initiate counter: $\tau = 0$
+   \item
+    \While{ $\tau V < I$ }{
+     \begin{enumerate}
+     \item Add one unit to $\tau$
+     \item $\forall i \in [(\tau - 1)V + 1, \tau V]$, split volume between buy or sell intitiated:
+     \begin{enumerate}
+      \item $V_{\tau}^B = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}}\right)$\\
+      \tcc{Assigns to Vb the number of observations classified as buy}
+      \item $V_{\tau}^S = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i \left( 1 - Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}} \right) \right) = V - V_{\tau}^B$\\
+      \tcc{Assigns to Vs the number of observations classified as sell}
+      \tcc{NB: V = Vb + Vs}
+     \end{enumerate}
+    \end{enumerate}
+    }
+   \item Set $L=\tau - 1$\\
+   \tcc{Last bucket is always incomplete or empty, thus it will not be used}
+   \end{enumerate}
+\end{algorithm}
+
+\pagebreak
+
+#Appendix B: Monte-Carlo Simulation of Volume Buckets
 
 ```{r}
 finv <- function(u,p)
