@@ -3,7 +3,7 @@ title: "Preliminary Project Update"
 author: "Nicholas Head"
 date: "January 11, 2015"
 header-includes:
-   - \usepackage{algorithm2e}
+   - \usepackage[lined,commentsnumbered]{algorithm2e}
 output: 
   rmarkdown::tufte_handout:
     highlight: tango
@@ -60,11 +60,30 @@ where $t(\tau)$ is the index of the last (volume or time) bar included in bucket
 V_{\tau}^S = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i \left( 1 - Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}} \right) \right) = V - V_{\tau}^B
 \end{equation}
 
+
 \begin{algorithm}[H]
- \KwData{Time series of transactions of a particular instrument\;
- asd}
- \KwResult{how to write algorithm with \LaTeX2e }
- initialization\;
+ \KwData{
+\begin{enumerate}
+  \item Time series of transactions of a particular instrument ($T_i$, $P_i$, $V_i$)
+    \begin{enumerate}
+    \item $T_i$: Time of the trade.
+    \item $P_i$: Price at which securities were exchanged.
+    \item $V_i$: Volume exchanged
+    \end{enumerate}
+  \item $V$: Volume size (determined by user of the formula)
+  \item $n$: Sample of volume buckets used in the estimation.
+\end{enumerate}
+ \tcc{Pi, Vi, V, n are all integer values. Ti is any time translation, in integer or double format, sequentially increasing as chronological time passes.}}
+ \KwResult{Prepare Equal Volume Buckets }
+  \begin{enumerate}
+   \item Sort transactions by time ascending: $T_{i+1} \geq T_i, \forall i$
+   \item Compute $\Delta P_i, \forall i$
+   \item Expand the number of observations by repeating each observation $\Delta P_i$ as many times as $V_i$. This generates a total of $I = \sum_i V_i$ observations $\Delta P_i$.
+   \item Re-index $\Delta P_i$ observations, $i = 1, ...,I$
+   \item Initiate counter: $\tau = 0$
+   \item Add one unit to $\tau$
+   \item If $I \lt \tau V$, jump to step 11 (there are insufficient observations)
+  \end{enumerate}
  \While{not at end of this document}{
   read current\;
   \eIf{understand}{
