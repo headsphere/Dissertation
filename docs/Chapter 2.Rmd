@@ -1,6 +1,8 @@
 ---
 title: "Chapter 2"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 ---
 
 # HMM Model Derivation
@@ -11,18 +13,28 @@ This section will outline the derivation of the HMM for univariate poisson obser
 
 An independent mixture model consists of $m < \infty$ component distributions with probability functions $p_i$ for $i \in {1, ... , m}$ and a “mixing distribution”. The mixing is performed by a discrete random variable $C$:
 
-\[
- C =
+$$C =
   \begin{cases}
    1        & \text{with probability } \delta_1 \\
    \vdots   & \vdots \\
    i        & \text{with probability } \delta_i \\
    \vdots   & \vdots \\
    m        & \text{with probability } \delta_m = \sum_{i=1}^{m-1} \delta_i
-  \end{cases}
-\]
+  \end{cases}$$
 
 Thus $Pr(C=i)=\delta_i$ must obey $0 < \delta_i < 1$ and that  $\sum_{i=1}^m \delta_i = 1$
+
+For a discrete random variable X described by a mixture model consisting of $m$ components it holds that:
+
+$$p(X) = \sum_{i=1}^m \delta_i p_i(X) \implies PR(X = x) = \sum_{i=1}^m Pr(X = x|C = i)$$
+
+To estimate the parameters $\theta$ of the mixture distribution via ML estimation is done by maximizing the combined likelihood of the components:
+
+$$L(\theta_1,...,\theta_m,\delta_1,...,\delta_m|x_1,...,x_n) = \prod_{j=1}^n \sum_{i=1}^m \delta_i p_i(x_j, \theta_i)$$
+
+For the example where $m = 2$ and the component distributions are poisson with parameters $\lambda_1$ and $\lambda_2$ the likelihood equation is as follows:
+
+$$L(\lambda_1,\lambda_2,\delta_1,\delta2 | x_1,...,x_n) = \prod_{j=1}^n \Bigg( \delta_1 + \delta_2 \Bigg)$$
 
 ```{r echo=FALSE, message=FALSE}
 options(digits = 3)
