@@ -28,13 +28,107 @@ For a discrete random variable X described by a mixture model consisting of $m$ 
 
 $$p(X) = \sum_{i=1}^m \delta_i p_i(X) \implies PR(X = x) = \sum_{i=1}^m Pr(X = x|C = i)$$
 
-To estimate the parameters $\theta$ of the mixture distribution via ML estimation is done by maximizing the combined likelihood of the components:
+To estimate the parameters $\theta$ of the mixture distribution via ML estimation we maximize the combined likelihood of the components:
 
 $$L(\theta_1,...,\theta_m,\delta_1,...,\delta_m|x_1,...,x_n) = \prod_{j=1}^n \sum_{i=1}^m \delta_i p_i(x_j, \theta_i)$$
 
 For the example where $m = 2$ and the component distributions are poisson with parameters $\lambda_1$ and $\lambda_2$ the likelihood equation is as follows:
 
-$$L(\lambda_1,\lambda_2,\delta_1,\delta2 | x_1,...,x_n) = \prod_{j=1}^n \Bigg( \delta_1 + \delta_2 \Bigg)$$
+$$L(\lambda_1,\lambda_2,\delta_1,\delta_2 | x_1,...,x_n) = \prod_{j=1}^n \Bigg( \delta_1 \frac{\lambda_1^{x_j} e^{-\lambda_1}}{x_j !} + \delta_2 \frac{\lambda_2^{x_j} e^{-\lambda_2}}{x_j !} \Bigg)$$
+
+In R this could be implemented naively as follows:
+
+```{r}
+lambdas = c(5, 10)
+deltas = c(0.3, 0.7)
+cdf = cumsum(deltas)
+
+N = 100
+unifvec = runif(N)
+d1 = rpois(sum(unifvec < cdf[1]),lambdas[1])
+d2 = rpois(sum(unifvec >= cdf[1]),lambdas[2])
+x = c(d1,d2) 
+```
+
+This code generates a series of observed x values according to a mixture of two poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
+
+We can see from a plot of the time series the data appears to conform to two separate distributions, or states:  
+
+```{r echo=FALSE}
+plot.ts(x)
+```
+
+Before maximisiming the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$s and logit transforming the $\delta$s 
+
+$$\text{Log-transform }\quad \eta_i = log \lambda_i, i = 1,...,m$$
+$$\text{Logit-transform }\quad \tau_i = log \Bigg( \frac{\delta_1}{1 - \delta_2}\Bigg)$$
+
+In R:
+```{r eval=TRUE}
+logit <- function(delta2) log(delta2/(1-delta2))
+
+eta = log(lambdas)
+tau = logit(deltas[2])
+```
+
+After the maximisation has occured the original parameters can be recovered by the inverse transformations:
+
+$$\text{exp-transform }\quad \lambda_i = e^{\eta_i}, i = 1,...,m$$
+$$\text{inverse logit }\quad \delta_2 = \frac{e^{\tau}}{1 + e^{\tau}}$$
+
+and additionally $\delta_1 = 1 - delta_2$
+
+```{r eval=TRUE}
+invlogit <- function(tau) exp(tau)/(1+exp(tau))
+
+lambdas = exp(eta)
+delta2 = invlogit(tau)
+delta1 = 1 - delta2
+```
+
+Now we have all the building blocks to maximise the negative log-likelihood for a two-state mixture distribution:
+
+```{r}
+f <- function(PAR,data) {
+  eta <- PAR[1:2]
+  tau <- PAR[3]
+  lambdas = exp(eta) 
+  delta2 = invlogit(tau)
+  delta1 = 1-delta2
+
+  L = delta1*dpois(data,lambdas[1]) + delta2*dpois(data,lambdas[2])
+  -sum(log(L))
+}
+
+#use 25% and 75% the quantiles of the data as a guess for lambdas
+quantiles <- quantile(x)
+lambdaGuess = c(quantiles[2],quantiles[4]) 
+
+deltaGuess = 0.1
+
+# Optimize using nlm
+theta <- c(log(lambdaGuess), logit(deltaGuess))
+res = nlm(f, theta, data = x)
+
+# Back transform results
+lambda1Hat = exp(res$estimate[1])
+lambda2Hat = exp(res$estimate[2])
+
+delta2Hat = invlogit(res$estimate[3])
+delta1Hat = 1-delta2Hat
+```
+
+Estimated values:
+
+$\lambda_1 = `r lambdas[1]`$, $\hat{\lambda_1} = `r lambda1Hat`$
+
+$\lambda_2 = `r lambdas[2]`$, $\hat{\lambda_2} = `r lambda2Hat`$
+
+$\delta_1 = `r deltas[1]`$, $\hat{\delta_1} = `r delta1Hat`$
+
+$\delta_2 = `r deltas[2]`$, $\hat{\delta_2} = `r delta2Hat`$
+
+The mixture distribution parameters appear to be estimated somewhat satisfactorily.
 
 ```{r echo=FALSE, message=FALSE}
 options(digits = 3)
@@ -62,19 +156,6 @@ m=3
 logit <- function(vec) log(vec/(1-sum(vec)))
 invlogit <- function(vec) exp(vec)/(1+sum(exp(vec)))
 
-f <- function(PAR,data) {
-  M = length(PAR)
-  m = ceiling(M/2)
-  LA = exp(PAR[1:m]) # transform lambdas
-  DELs = invlogit(PAR[(m+1):M]) # transform deltas
-  DEL = c(DELs,1-sum(DELs))
-  # Equation (1.1) on p. 9
-  L = DEL[1]*dpois(data,LA[1])
-  for(i in 2:m){
-    L = L+DEL[i]*dpois(data,LA[i])
-  }
-  -sum(log(L))
-}
 
 # Define starting guess for optimization
 par = c(10,20,30,0.5,0.2)
