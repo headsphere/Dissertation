@@ -1,15 +1,25 @@
 ---
 title: "Chapter 2"
 output: 
-  html_document: 
-    keep_md: yes
+  rmarkdown::tufte_handout
+
 ---
+```{r echo=FALSE}
+options(digits = 3)
+
+PlotTsAndDensity <- function (x) {
+  #par(mfrow = c(1, 2))
+  plot.ts(x, xlab = NULL, ylab = NULL)
+  hist(x, breaks=30, freq = F, main=NULL, xlab = NULL, ylab = NULL)
+  lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
+}
+```
 
 # HMM Model Derivation
 
-## Univariate Poisson Toy Example
+## Independent Mixture Model
 
-This section will outline the derivation of the HMM for univariate poisson observed data. 
+This section will outline the derivation of the HMM for univariate poisson observed data. We will use a toy example in order to illustrate the derivation.
 
 An independent mixture model consists of $m < \infty$ component distributions with probability functions $p_i$ for $i \in {1, ... , m}$ and a “mixing distribution”. The mixing is performed by a discrete random variable $C$:
 
@@ -39,26 +49,24 @@ $$L(\lambda_1,\lambda_2,\delta_1,\delta_2 | x_1,...,x_n) = \prod_{j=1}^n \Bigg( 
 In R this could be implemented naively as follows:
 
 ```{r}
-lambdas = c(5, 10)
+lambdas = c(3, 15)
 deltas = c(0.3, 0.7)
 cdf = cumsum(deltas)
-
-N = 100
-unifvec = runif(N)
+unifvec = runif(100)
 d1 = rpois(sum(unifvec < cdf[1]),lambdas[1])
 d2 = rpois(sum(unifvec >= cdf[1]),lambdas[2])
 x = c(d1,d2) 
 ```
 
-This code generates a series of observed x values according to a mixture of two poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
+This code generates a series of x values according to a mixture of two poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
 
-We can see from a plot of the time series the data appears to conform to two separate distributions, or states:  
+We can see from both the following plots of the time series and the histograms (with fitted density) the data appears to conform to two separate distributions, or states:  
 
-```{r echo=FALSE}
-plot.ts(x)
+```{r echo=FALSE, fig.fullwidth = FALSE}
+PlotTsAndDensity(x)
 ```
 
-Before maximisiming the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$s and logit transforming the $\delta$s 
+Before maximisiming the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$ and logit transforming $\delta$.
 
 $$\text{Log-transform }\quad \eta_i = log \lambda_i, i = 1,...,m$$
 $$\text{Logit-transform }\quad \tau_i = log \Bigg( \frac{\delta_1}{1 - \delta_2}\Bigg)$$
@@ -88,10 +96,10 @@ delta1 = 1 - delta2
 
 Now we have all the building blocks to maximise the negative log-likelihood for a two-state mixture distribution:
 
-```{r}
-f <- function(PAR,data) {
-  eta <- PAR[1:2]
-  tau <- PAR[3]
+```{r warning=FALSE}
+f <- function(theta,data) {
+  eta <- theta[1:2]
+  tau <- theta[3]
   lambdas = exp(eta) 
   delta2 = invlogit(tau)
   delta1 = 1-delta2
@@ -100,7 +108,7 @@ f <- function(PAR,data) {
   -sum(log(L))
 }
 
-#use 25% and 75% the quantiles of the data as a guess for lambdas
+#use the 25% and 75%  quantiles of the data as a guess for lambdas
 quantiles <- quantile(x)
 lambdaGuess = c(quantiles[2],quantiles[4]) 
 
@@ -120,17 +128,43 @@ delta1Hat = 1-delta2Hat
 
 Estimated values:
 
-$\lambda_1 = `r lambdas[1]`$, $\hat{\lambda_1} = `r lambda1Hat`$
+$$\boldsymbol{\lambda} = 
+\begin{pmatrix}
+ `r lambdas[1]` \\
+ `r lambdas[2]`
+\end{pmatrix} \qquad
+\boldsymbol{\hat{\lambda}} = 
+\begin{pmatrix}
+ `r lambda1Hat` \\
+ `r lambda2Hat`
+\end{pmatrix}$$
 
-$\lambda_2 = `r lambdas[2]`$, $\hat{\lambda_2} = `r lambda2Hat`$
+$$\boldsymbol{\delta} = 
+\begin{pmatrix}
+ `r deltas[1]` \\
+ `r deltas[2]`
+\end{pmatrix} \qquad
+\boldsymbol{\hat{\delta}} = 
+\begin{pmatrix}
+ `r delta1Hat` \\
+ `r delta2Hat`
+\end{pmatrix}$$
 
-$\delta_1 = `r deltas[1]`$, $\hat{\delta_1} = `r delta1Hat`$
+The mixture distribution parameters appear to be estimated satisfactorily.
 
-$\delta_2 = `r deltas[2]`$, $\hat{\delta_2} = `r delta2Hat`$
+The next step is to introduce into the model a way of capturing the transition behaviour between the states over time.
 
-The mixture distribution parameters appear to be estimated somewhat satisfactorily.
 
-```{r echo=FALSE, message=FALSE}
+## Markov switching process
+
+\begin{figure*}[h]
+  \includegraphics{images/hmm-states}
+\end{figure*}
+
+
+
+
+```{r echo=FALSE, message=FALSE, eval=FALSE}
 options(digits = 3)
 
 library(zoo)
@@ -140,12 +174,6 @@ library(xtable)
 earthquakes = read.delim("../data/earthquakes.txt")
 #head(earthquakes)
 
-PlotTsAndDensity <- function (x) {
-  par(mfrow = c(1, 2))
-  plot.ts(x)
-  hist(x, breaks=30, freq = F)
-  lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
-}
 
 PlotTsAndDensity(earthquakes$X13)
 
@@ -178,16 +206,14 @@ del[1] = deltas[1]
 del[2] = deltas[2]
 del[3] = 1 - sum(deltas)
 
-```
 
-The fitted parameter values are:
+#The fitted parameter values are:
 
-$$\boldsymbol{\lambda} = \left( \lambda_1, \lambda_2 \, \lambda_3 \right) = \left( `r la1`, `r la2`, `r la3` \right)$$
+#$$\boldsymbol{\lambda} = \left( \lambda_1, \lambda_2 \, \lambda_3 \right) = \left( `r la1`, `r la2`, `r la3` \right)$$
 
-$$\boldsymbol{\delta} = \left( \delta_1, \delta_2 \, \delta_3 \right) = \left( `r del[1]`, `r del[2]`, `r del[3]` \right)$$
+#$$\boldsymbol{\delta} = \left( \delta_1, \delta_2 \, \delta_3 \right) = \left( `r del[1]`, `r del[2]`, `r del[3]` \right)$$
 
-```{r}
-# Define model values for a 3-state mixture model m=3
+  # Define model values for a 3-state mixture model m=3
 
 cd = cumsum(del)
 
