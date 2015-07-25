@@ -24,7 +24,7 @@ PlotTsAndDensity <- function (x) {
 
 This section will outline the derivation of the HMM for univariate poisson observed data. We will use a toy example in order to illustrate the derivation.
 
-An independent mixture model consists of $m < \infty$ component distributions with probability functions $p_i$ for $i \in {1, ... , m}$ and a “mixing distribution”. The mixing is performed by a discrete random variable $C$:
+An independent mixture model consists of $m$ component distributions with probability functions $p_i$ for $i \in {1, ... , m}$ and a “mixing distribution”. The mixing is performed by a discrete random variable $C$:
 $$C =
   \begin{cases}
    1        & \text{with probability } \delta_1 \\
@@ -206,6 +206,34 @@ We will often want to calculate the marginal distribution of $X$. This can be ac
  
 $\mathbf{u}(t)$ is the distribution of the hidden states, and $\mathbf{P}(x)$ is the state-dependent distribution of the observations. $\mathbf{u}(1)$ is defined as the initial distribution of the Markov chain.
 
+The diagonal matrix of conditional probabilities ${P}(x)$ defined as:
+$$\mathbf{P}(x) = \begin{pmatrix}
+                   p_1(x) &        & 0 \\
+                          & \ddots &   \\
+                   0      &        & p_m(x) 
+                 \end{pmatrix}$$
+
+Where for example: $\boldsymbol{\lambda} = \begin{pmatrix}
+                           `r lambdas[1]` \\
+                           `r lambdas[2]`
+                         \end{pmatrix}$
+$$\mathbf{P}(1) = \begin{pmatrix}
+ \frac{e^{-`r lambdas[1]`} `r lambdas[1]`^1}{1!} & 0 \\
+ 0                     & \frac{e^{-`r lambdas[2]`} `r lambdas[2]`^1}{1!} 
+\end{pmatrix} = 
+\begin{pmatrix}
+ `r dpois(1, lambdas[1])` & 0 \\
+ 0                        & `r dpois(1, lambdas[2])`
+\end{pmatrix}$$
+
+This can be implemented easily in R as:
+
+```{r}
+PMat <- function(x) diag(dpois(x = x, lambda = lambdas))
+
+PMat(1)
+```
+
 Next we introduce the transition probability matrix $\boldsymbol{\Gamma}(t)$ which is the $m \times m$ matrix of transition probabilities at state $t$:
 
 $$\boldsymbol{\Gamma}(1) = \begin{pmatrix}
@@ -224,3 +252,32 @@ If the Markov chain can be shown to be stationary with stationary distribution $
 
 $$Pr(X_t = x) = \boldsymbol{\delta} \mathbf{P}(x) \mathbf{1'}$$
 
+It can be shown that if the stationary distribution exists then $\boldsymbol{\delta}$ be found using the following calculation:
+
+$$\boldsymbol{\delta} (\mathbf{I}_m - \boldsymbol{\Gamma} + \mathbf{U}) = \mathbf{1}$$
+
+Where $\mathbf{I}_m$ is an $m \times m$ identity matrix and $\mathbf{U}$ is an $m \times m$ matrix of ones. This can be implemented simply in R as follows:
+
+
+```{r}
+statdist <- function(gamma){
+  m = dim(gamma)[1]
+  matrix(1,1,m) %*% solve(diag(1,m) - gamma + matrix(1,m,m))
+}
+```
+
+To illustrate this concept, lets extend the example we used previously:
+
+```{r}
+gamma = matrix(c(0.9,0.1,0.4,0.6), nrow = 2, byrow = TRUE)
+```
+
+
+$$\boldsymbol{\lambda} = \begin{pmatrix}
+                           `r lambdas[1]` \\
+                           `r lambdas[2]`
+                         \end{pmatrix} \qquad
+\boldsymbol{\Gamma} = \begin{pmatrix}
+                        `r gamma[1,1]` & `r gamma[1,2]` \\
+                        `r gamma[2,1]` & `r gamma[2,2]`
+                      \end{pmatrix}$$
