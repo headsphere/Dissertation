@@ -173,15 +173,19 @@ As shown in the directed graph below, this is saying that when $C_t$ is known th
 
 For discrete distributions we can define the m-state dependant distribution function as:
 
-$$p_i(X) = Pr(X_t = x | C_t = i), i,2,\dots,m$$
+\begin{equation} \label{eq:dependantDist}
+  p_i(X) = Pr(X_t = x | C_t = i), i,2,\dots,m
+\end{equation}
 
 Which is simply the conditional probability of observing $x$ at time $t$ when $C$ is in state $i$.
 
 Additionally we can define the unconditional probability of being in state $i$ at time $t$ as:
 
-$$u_i(t) = Pr(C_t = i), t = 1,\dots,T$$
+\begin{equation} \label{eq:stateDist}
+  u_i(t) = Pr(C_t = i), t = 1,\dots,T
+\end{equation}
 
-We will often want to calculate the marginal distribution of $X$. This can be achieved by summing over the states and using the hidden state and state-dependent distributions we defined earlier:
+We will often want to calculate the marginal distribution of $X$. This can be achieved by summing over the states and using the hidden state $\eqref{eq:stateDist}$ and state-dependent $\eqref{eq:dependantDist}$ distributions:
 
 \begin{align}
  \begin{aligned}\nonumber  
@@ -250,11 +254,15 @@ $$Pr(X_t = x) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1} \mathbf{P}(x) \mathbf{1'
 
 If the Markov chain can be shown to be stationary with stationary distribution $\boldsymbol{\delta}$, because $\boldsymbol{\delta} \boldsymbol{\Gamma}^{t-1} = \boldsymbol{\delta}$ for all $t$ we get:
 
-$$Pr(X_t = x) = \boldsymbol{\delta} \mathbf{P}(x) \mathbf{1'}$$
+\begin{equation} \label{eq:marginal}
+  Pr(X_t = x) = \boldsymbol{\delta} \mathbf{P}(x) \mathbf{1'}
+\end{equation}
 
-It can be shown that if the stationary distribution exists then $\boldsymbol{\delta}$ be found using the following calculation:
+It can be shown that if the stationary distribution exists then $\boldsymbol{\delta}$ can be found using the following calculation:
 
-$$\boldsymbol{\delta} (\mathbf{I}_m - \boldsymbol{\Gamma} + \mathbf{U}) = \mathbf{1}$$
+\begin{equation} \label{eq:stationary}
+  \boldsymbol{\delta} (\mathbf{I}_m - \boldsymbol{\Gamma} + \mathbf{U}) = \mathbf{1}
+\end{equation}
 
 Where $\mathbf{I}_m$ is an $m \times m$ identity matrix and $\mathbf{U}$ is an $m \times m$ matrix of ones. This can be implemented simply in R as follows:
 
@@ -266,12 +274,11 @@ statdist <- function(gamma){
 }
 ```
 
-To illustrate this concept, lets extend the example we used previously:
+To illustrate this concept, lets extend the example we used previously this time introducing a hypothetical transition matrix:
 
 ```{r}
 gamma = matrix(c(0.9,0.1,0.4,0.6), nrow = 2, byrow = TRUE)
 ```
-
 
 $$\boldsymbol{\lambda} = \begin{pmatrix}
                            `r lambdas[1]` \\
@@ -281,3 +288,22 @@ $$\boldsymbol{\lambda} = \begin{pmatrix}
                         `r gamma[1,1]` & `r gamma[1,2]` \\
                         `r gamma[2,1]` & `r gamma[2,2]`
                       \end{pmatrix}$$
+
+We can now calculate the stationary distribution $\boldsymbol{\delta}$ using equation $\eqref{eq:stationary}$:
+
+```{r}
+delta = statdist(gamma)
+```
+
+$$\boldsymbol{\delta} = \begin{pmatrix}
+                           `r delta[1]` \\
+                           `r delta[2]`
+                         \end{pmatrix} \qquad$$
+                         
+With which we can now calculate the marginal distribution $\eqref{eq:marginal}$, for example for $P(X = 1)$:
+
+```{r}
+x = 1
+sum(delta %*% PMat(x))
+```
+
