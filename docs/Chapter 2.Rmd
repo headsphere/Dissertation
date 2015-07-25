@@ -250,11 +250,13 @@ $$\gamma_{ij}(t) = Pr(C_{s+t} = j | C_s = i)$$
 
 Because the Markov chain satisfies the Chapman-Kolmogorov equations we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ ($\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
 
-$$Pr(X_t = x) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1} \mathbf{P}(x) \mathbf{1'}$$
+\begin{equation} \label{eq:marginalNonStat}
+  Pr(X_t = x) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1} \mathbf{P}(x) \mathbf{1'}
+\end{equation}
 
 If the Markov chain can be shown to be stationary with stationary distribution $\boldsymbol{\delta}$, because $\boldsymbol{\delta} \boldsymbol{\Gamma}^{t-1} = \boldsymbol{\delta}$ for all $t$ we get:
 
-\begin{equation} \label{eq:marginal}
+\begin{equation} \label{eq:marginalStat}
   Pr(X_t = x) = \boldsymbol{\delta} \mathbf{P}(x) \mathbf{1'}
 \end{equation}
 
@@ -300,10 +302,32 @@ $$\boldsymbol{\delta} = \begin{pmatrix}
                            `r delta[2]`
                          \end{pmatrix} \qquad$$
                          
-With which we can now calculate the marginal distribution $\eqref{eq:marginal}$, for example for $P(X = 1)$:
+With which we can now calculate the marginal distribution $\eqref{eq:marginalStat}$, for example for $P(X = 1)$:
 
 ```{r}
 x = 1
 sum(delta %*% PMat(x))
 ```
+
+## Calculating the Likelihood
+
+The first step to calculate the likelihood fuinction is to extend the univariate marginal distribution $\eqref{eq:marginalNonStat}$ to a bivariate distribution. Zucchini and MacDonald show that $\eqref{eq:marginalNonStat}$ can be extended so that:
+
+$$Pr(X_t = v, X_{t+k} = w) = \mathbf{u}(t) \mathbf{P}(v) \boldsymbol{\Gamma}^k \mathbf{P}(w) \mathbf{1'}$$
+
+While the equivalent for a stationary chain reduces to:
+
+$$Pr(X_t = v, X_{t+k} = w) = \boldsymbol{\delta} \mathbf{P}(v) \boldsymbol{\Gamma}^k \mathbf{P}(w) \mathbf{1'}$$
+
+This then can be generalised to a $T$-th order distribution and hence the likelihood for a set of observations $\mathbf{X}^{(T)} = (X_1,X,2,\dots,X_T)$ given the parameters of an HMM is:
+
+$$L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}$$
+
+
+
+- Marginal Multivariate HMM
+
+- Likelihood in general
+
+- Algorithm to compute
 
