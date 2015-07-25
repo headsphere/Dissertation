@@ -1,8 +1,11 @@
 ---
 title: "Chapter 2"
-output: 
-  rmarkdown::tufte_handout
-
+header-includes:
+   - \usepackage[lined,commentsnumbered]{algorithm2e}
+output:
+  rmarkdown::tufte_handout: default
+  md_document:
+    variant: markdown_github
 ---
 ```{r echo=FALSE}
 options(digits = 3)
@@ -22,7 +25,6 @@ PlotTsAndDensity <- function (x) {
 This section will outline the derivation of the HMM for univariate poisson observed data. We will use a toy example in order to illustrate the derivation.
 
 An independent mixture model consists of $m < \infty$ component distributions with probability functions $p_i$ for $i \in {1, ... , m}$ and a “mixing distribution”. The mixing is performed by a discrete random variable $C$:
-
 $$C =
   \begin{cases}
    1        & \text{with probability } \delta_1 \\
@@ -154,78 +156,71 @@ The mixture distribution parameters appear to be estimated satisfactorily.
 
 The next step is to introduce into the model a way of capturing the transition behaviour between the states over time.
 
-
 ## Markov switching process
 
-\begin{figure*}[h]
+The independent mixture model is used to cater for the overdispersion noticed in some time series data. The second feature often found is that they exhibit serial dependece between the observations. This dependence is identified via the autocorrelation function of the data. To cater for this we model the dependence between the mixtures by introducing a Markov process. With this building block we will have completely defined the hidden Markov model. 
+
+If we define $\{C_t : t = 1,2, \dots \}$ as the unbserved hidden states, and $\{X_t : t = 1,2, \dots \}$ as the observed data points, we can say a hidden Markov is a dependent mixture where:
+
+$$Pr(C_t = i | C^{(t-1)}) = Pr(C_t = i | C_{t-1}), t = 2,3,\dots$$
+$$Pr(X_t = x | X^{(t-1)}, C^{(t)}) = Pr(X_t = x | C_t), t \in \mathbb{N}$$
+
+As shown in the directed graph below, this is saying that when $C_t$ is known the distribution of $X_t$ only depends on $C_t$
+
+\begin{figure}
   \includegraphics{images/hmm-states}
-\end{figure*}
+\end{figure}
 
+For discrete distributions we can define the m-state dependant distribution function as:
 
+$$p_i(X) = Pr(X_t = x | C_t = i), i,2,\dots,m$$
 
+Which is simply the conditional probability of observing $x$ at time $t$ when $C$ is in state $i$.
 
-```{r echo=FALSE, message=FALSE, eval=FALSE}
-options(digits = 3)
+Additionally we can define the unconditional probability of being in state $i$ at time $t$ as:
 
-library(zoo)
-library(xts)
-library(xtable)
+$$u_i(t) = Pr(C_t = i), t = 1,\dots,T$$
 
-earthquakes = read.delim("../data/earthquakes.txt")
-#head(earthquakes)
+We will often want to calculate the marginal distribution of $X$. This can be achieved by summing over the states and using the hidden state and state-dependent distributions we defined earlier:
 
+\begin{align}
+ \begin{aligned}\nonumber  
+    Pr(X_t = x) &= \sum_{i=1}^m Pr(C_t = i) Pr(X_t = x | C_t = i) \\
+                &= \sum_{i=1}^m u_i(t) p_i(x) \\
+                &= \begin{pmatrix}
+                     u_1(t),\dots,u_m(t) 
+                   \end{pmatrix}
+                   \begin{pmatrix}
+                     p_1(x) &        & 0 \\
+                            & \ddots &   \\
+                     0      &        & p_m(x) 
+                   \end{pmatrix}
+                   \begin{pmatrix}
+                     1 \\
+                     \vdots \\
+                     1 
+                   \end{pmatrix} \\
+                &= \mathbf{u}(t) \mathbf{P}(x) \mathbf{1'}
+ \end{aligned}
+ \end{align}
+ 
+$\mathbf{u}(t)$ is the distribution of the hidden states, and $\mathbf{P}(x)$ is the state-dependent distribution of the observations. $\mathbf{u}(1)$ is defined as the initial distribution of the Markov chain.
 
-PlotTsAndDensity(earthquakes$X13)
+Next we introduce the transition probability matrix $\boldsymbol{\Gamma}(t)$ which is the $m \times m$ matrix of transition probabilities at state $t$:
 
-# Define model values for a 3-state mixture model 
-m=3
+$$\boldsymbol{\Gamma}(1) = \begin{pmatrix}
+                             \gamma_{11} & \cdots & \gamma_{1m} \\
+                             \vdots      & \ddots & \vdots  \\
+                             \gamma_{m1} & \cdots & \gamma_{mm}
+                           \end{pmatrix}$$
 
-# Functions for parameter transformation
-logit <- function(vec) log(vec/(1-sum(vec)))
-invlogit <- function(vec) exp(vec)/(1+sum(exp(vec)))
+$$\gamma_{ij}(t) = Pr(C_{s+t} = j | C_s = i)$$
 
+Because the Markov chain satisfies the Chapman-Kolmogorov equations we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ ($\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
 
-# Define starting guess for optimization
-par = c(10,20,30,0.5,0.2)
-PAR = par
-PAR[1:3] = log(par[1:3])
-PAR[4:5] = logit(par[4:5])
+$$Pr(X_t = x) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1} \mathbf{P}(x) \mathbf{1'}$$
 
-# Optimize using nlm
-res = nlm(f,PAR, data = earthquakes$X13)
-# Back transform results
-lambdas = exp(res$estimate[1:3])
-deltas = invlogit(res$estimate[4:5])
+If the Markov chain can be shown to be stationary with stationary distribution $\boldsymbol{\delta}$, because $\boldsymbol{\delta} \boldsymbol{\Gamma}^{t-1} = \boldsymbol{\delta}$ for all $t$ we get:
 
-la1 = lambdas[1]
-la2 = lambdas[2]
-la3 = lambdas[3]
-
-del = matrix(0,1,m-1)
-del[1] = deltas[1]
-del[2] = deltas[2]
-del[3] = 1 - sum(deltas)
-
-
-#The fitted parameter values are:
-
-#$$\boldsymbol{\lambda} = \left( \lambda_1, \lambda_2 \, \lambda_3 \right) = \left( `r la1`, `r la2`, `r la3` \right)$$
-
-#$$\boldsymbol{\delta} = \left( \delta_1, \delta_2 \, \delta_3 \right) = \left( `r del[1]`, `r del[2]`, `r del[3]` \right)$$
-
-  # Define model values for a 3-state mixture model m=3
-
-cd = cumsum(del)
-
-# Generate random data for a m mixture model
-N = 100 # number of data points
-unifvec = runif(N)
-d1 = rpois(sum(unifvec < cd[1]),la1)
-d2 = rpois(sum(unifvec > cd[1] & unifvec < cd[2]),la2)
-d3 = rpois(sum(unifvec > cd[2]),la3)
-sim.x = c(d1,d2,d3) # Data vector
-
-PlotTsAndDensity(sim.x)
-PlotTsAndDensity(sample(sim.x,replace = FALSE))
-```
+$$Pr(X_t = x) = \boldsymbol{\delta} \mathbf{P}(x) \mathbf{1'}$$
 
