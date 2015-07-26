@@ -4,8 +4,7 @@ header-includes:
    - \usepackage[lined,commentsnumbered]{algorithm2e}
 output:
   rmarkdown::tufte_handout: default
-  md_document:
-    variant: markdown_github
+  word_document: default
 ---
 ```{r echo=FALSE}
 options(digits = 3)
@@ -86,7 +85,7 @@ After the maximisation has occured the original parameters can be recovered by t
 $$\text{exp-transform }\quad \lambda_i = e^{\eta_i}, i = 1,...,m$$
 $$\text{inverse logit }\quad \delta_2 = \frac{e^{\tau}}{1 + e^{\tau}}$$
 
-and additionally $\delta_1 = 1 - delta_2$
+and additionally $\delta_1 = 1 - \delta_2$
 
 ```{r eval=TRUE}
 invlogit <- function(tau) exp(tau)/(1+exp(tau))
@@ -248,7 +247,7 @@ $$\boldsymbol{\Gamma}(1) = \begin{pmatrix}
 
 $$\gamma_{ij}(t) = Pr(C_{s+t} = j | C_s = i)$$
 
-Because the Markov chain satisfies the Chapman-Kolmogorov equations we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ ($\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
+Because the Markov chain satisfies the Chapman-Kolmogorov equations we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ (where $\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
 
 \begin{equation} \label{eq:marginalNonStat}
   Pr(X_t = x) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1} \mathbf{P}(x) \mathbf{1'}
@@ -319,15 +318,68 @@ While the equivalent for a stationary chain reduces to:
 
 $$Pr(X_t = v, X_{t+k} = w) = \boldsymbol{\delta} \mathbf{P}(v) \boldsymbol{\Gamma}^k \mathbf{P}(w) \mathbf{1'}$$
 
-This then can be generalised to a $T$-th order distribution and hence the likelihood for a set of observations $\mathbf{X}^{(T)} = (X_1,X,2,\dots,X_T)$ given the parameters of an HMM is:
+This then can be generalised to a $T$-th order distribution and hence the likelihood for a set of observations $\mathbf{X}^{(T)} = (X_1,X_2,\dots,X_T)$ given the parameters of an HMM is:
 
 $$L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}$$
 
+A recursive algorithm can be defined to calculate the likelihood, first by defining the foward probability vector:
 
+$$\boldsymbol{\alpha_t} = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T)$$
 
-- Marginal Multivariate HMM
+From which the likelihood can now be recursively calculated:
 
-- Likelihood in general
+\begin{align}
+ \begin{aligned}\nonumber  
+     \boldsymbol{\alpha_1} &= \boldsymbol{\delta} \mathbf{P}(x_1) \\
+     \boldsymbol{\alpha_t} &= \boldsymbol{\alpha_{t-1}} \boldsymbol{\Gamma} \mathbf{P}(x_t) \qquad for \quad t = 2,3,\dots,T\\
+     L_T                   &= \boldsymbol{\alpha_T} \mathbf{1'}
+ \end{aligned}
+ \end{align}
 
-- Algorithm to compute
+If $\boldsymbol{\delta}$ provided is in fact the stationary distribution of the Markov chain, then the recursive scheme becomes:
+
+\begin{align}
+ \begin{aligned}\nonumber  
+     \boldsymbol{\alpha_0} &= \boldsymbol{\delta} \\
+     \boldsymbol{\alpha_t} &= \boldsymbol{\alpha_{t-1}} \boldsymbol{\Gamma} \mathbf{P}(x_t) \qquad for \quad t = 1,2,\dots,T\\
+     L_T                   &= \boldsymbol{\alpha_T} \mathbf{1'}
+ \end{aligned}
+ \end{align}
+ 
+ With R implementation:
+
+```{r}
+pois.hmm.alpha <- function(x, gamma, delta = NULL)
+{
+  n = length(x)
+  alpha = vector(mode="list", length=n)
+  alpha0= statdist(gamma)
+  
+  for(t in 1:n)
+  {
+    if(t==1)
+    {
+      prevAlpha = alpha0
+    }
+    else
+    {
+      prevAlpha = alpha[[t-1]]
+    }
+    alpha[[t]] = prevAlpha %*% gamma %*% PMat(x[t])
+  }
+  return(alpha[[length(x)]])
+}
+```
+
+The problem with this scheme however is that as $t$ increases, $\boldsymbol{\alpha_t}$ rapidly diminishes as it is the product of a large number of probabilities, and when implemented computationally, will be rounded to zero (a problem known as underflow). We can show that the calculation works for small $t$ however needs to be re-worked for any non-trivial time series.
+
+As an example we can calculate $Pr(X_1 = 0, X_2 = 2, X_3 = 1)$, using the previously defined $\boldsymbol{\Gamma}$ and $\boldsymbol{\lambda}$ parameters: 
+```{r}
+x = c(0,2,1)
+#gamma = matrix(c(0.1,0.9,0.4,0.6), nrow = 2, byrow = TRUE)
+#lambdas = c(1,3)
+alpha = pois.hmm.alpha(x, gamma)
+prob = sum(alpha)
+prob
+```
 
