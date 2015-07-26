@@ -5,7 +5,10 @@ header-includes:
 output:
   rmarkdown::tufte_handout: default
   word_document: default
+bibliography: library.bib
+csl: harvard1.csl
 ---
+
 ```{r echo=FALSE}
 options(digits = 3)
 
@@ -97,7 +100,7 @@ delta1 = 1 - delta2
 
 Now we have all the building blocks to maximise the negative log-likelihood for a two-state mixture distribution:
 
-```{r warning=FALSE}
+```{r warning=FALSE, cache=TRUE}
 f <- function(theta,data) {
   eta <- theta[1:2]
   tau <- theta[3]
@@ -310,7 +313,7 @@ sum(delta %*% PMat(x))
 
 ## Calculating the Likelihood
 
-The first step to calculate the likelihood fuinction is to extend the univariate marginal distribution $\eqref{eq:marginalNonStat}$ to a bivariate distribution. Zucchini and MacDonald show that $\eqref{eq:marginalNonStat}$ can be extended so that:
+The first step to calculate the likelihood function is to extend the univariate marginal distribution $\eqref{eq:marginalNonStat}$ to a bivariate distribution. @zucchini show that $\eqref{eq:marginalNonStat}$ can be extended so that:
 
 $$Pr(X_t = v, X_{t+k} = w) = \mathbf{u}(t) \mathbf{P}(v) \boldsymbol{\Gamma}^k \mathbf{P}(w) \mathbf{1'}$$
 
@@ -376,10 +379,10 @@ The problem with this scheme however is that as $t$ increases, $\boldsymbol{\alp
 As an example we can calculate $Pr(X_1 = 0, X_2 = 2, X_3 = 1)$, using the previously defined $\boldsymbol{\Gamma}$ and $\boldsymbol{\lambda}$ parameters: 
 ```{r}
 x = c(0,2,1)
-#gamma = matrix(c(0.1,0.9,0.4,0.6), nrow = 2, byrow = TRUE)
-#lambdas = c(1,3)
 alpha = pois.hmm.alpha(x, gamma)
 prob = sum(alpha)
 prob
 ```
+@durbin present a method of scaling the computations to mitigate this issue of underflow.
 
+#References
