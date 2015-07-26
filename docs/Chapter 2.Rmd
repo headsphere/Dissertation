@@ -384,5 +384,9 @@ prob = sum(alpha)
 prob
 ```
 @durbin present a method of scaling the computations to mitigate this issue of underflow.
+[@durbin]
+[@durbin, pp.99]
+[-@durbin]
+[@durbin]
 
 #References
