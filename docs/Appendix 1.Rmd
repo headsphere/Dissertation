@@ -1,0 +1,13 @@
+---
+title: "Appendix 1"
+output: 
+  rmarkdown::tufte_handout: default
+---
+
+```{r echo=FALSE}
+library(knitr)
+read_chunk("../code/A1.R")
+```
+
+```{r PoiossonHMM_MLE, echo=TRUE}
+```
