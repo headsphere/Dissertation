@@ -1,7 +1,7 @@
 ---
 title: "Chapter 2"
 header-includes:
-   - \usepackage[lined,commentsnumbered]{algorithm2e}
+   - \usepackage[]{algpseudocode}
 output:
   rmarkdown::tufte_handout: default
   word_document: default
@@ -72,8 +72,12 @@ PlotTsAndDensity(x)
 
 Before maximisiming the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$ and logit transforming $\delta$.
 
-$$\text{Log-transform }\quad \eta_i = log \lambda_i, i = 1,...,m$$
-$$\text{Logit-transform }\quad \tau_i = log \Bigg( \frac{\delta_1}{1 - \delta_2}\Bigg)$$
+\begin{align}
+ \begin{aligned}\label{eq:paramN2W}
+    \text{Log-transform } \quad   & \eta_i = log \lambda_i, i = 1,...,m \\
+    \text{Logit-transform } \quad & \tau_i = log \Bigg( \frac{\delta_1}{1 - \delta_2}\Bigg)
+  \end{aligned}
+\end{align}
 
 In R:
 ```{r eval=TRUE}
@@ -85,8 +89,12 @@ tau = logit(deltas[2])
 
 After the maximisation has occured the original parameters can be recovered by the inverse transformations:
 
-$$\text{exp-transform }\quad \lambda_i = e^{\eta_i}, i = 1,...,m$$
-$$\text{inverse logit }\quad \delta_2 = \frac{e^{\tau}}{1 + e^{\tau}}$$
+\begin{align}
+ \begin{aligned}\label{eq:paramW2N}
+  \text{exp-transform }\quad &  \lambda_i = e^{\eta_i}, i = 1,...,m \\
+  \text{inverse logit }\quad &  \delta_2 = \frac{e^{\tau}}{1 + e^{\tau}}
+  \end{aligned}
+\end{align}
 
 and additionally $\delta_1 = 1 - \delta_2$
 
@@ -383,10 +391,42 @@ alpha = pois.hmm.alpha(x, gamma)
 prob = sum(alpha)
 prob
 ```
-@durbin present a method of scaling the computations to mitigate this issue of underflow.
-[@durbin]
-[@durbin, pp.99]
-[-@durbin]
-[@durbin]
+@durbin [pp.99] present a method of scaling the computations to mitigate this issue of underflow. In summary they propose the following algorithm (where $\boldsymbol{\Gamma}$ and $\mathbf{P}(x_t)$ are $m \times m$ matrices, $\mathbf{v}$ and $\boldsymbol{\phi_t}$ are vectors of length $m$, $u$ is a scalar, and $l$ is the scalar which accumulates the log-likelihood).
+
+\begin{algorithmic}
+\State set $\phi_0 \gets \boldsymbol{\delta}$ and $l \gets 0$
+\For{t = 1,2, \dots, T} 
+  \State $\mathbf{v}          \gets \boldsymbol{\phi_t} \boldsymbol{\Gamma} \mathbf{P}(x_t)$
+  \State $u                   \gets \mathbf{v} \mathbf{v}'$
+  \State $l                   \gets l + \text{log} u$
+  \State $\boldsymbol{\phi_t} \gets \mathbf{v} / u$
+\EndFor
+\State \Return $l$
+\end{algorithmic}
+
+In addition to this scaling solution, we also introduce two parameter transformations in a similar vein to what we did for the independent mixture models. Because it has been shown that the performance of constrained optimizers such as R's `constrOptim` can degrade when the parameter optimums lie close to their boundaries of the parameter space, we instead apply the following transformations to $\boldsymbol{\Gamma}$ and $\boldsymbol{\lambda}$
+
+- As before \eqref{eq:paramN2W}, \eqref{eq:paramN2W}, because the parameters $\lambda_i$ for a Poisson HMM are limited to be non-negative, we apply the log transformation to get the working parameters $\eta_i$, and then exponentiate them to obtain the natural parameters again.
+
+- Because the rows of the $\boldsymbol{\Gamma}$ matrix must all sum to one and the individual $\gamma_{ij}$ must all be non=-negative, we apply the following transformation (for details see @zucchini [pp. 48-49]:
+
+\begin{align}
+  \begin{aligned}\nonumber
+    \text{Natural to working } &  
+    \tau_{ij} = \text{log} \Bigg ( \frac{\gamma_{ij}}{1 - \sum_{k:k \neq i} \gamma_{ik}} \Bigg ) & i = 1, \dots,m, j = 2, \dots ,m \\
+    \text{Working to natural } &
+    \gamma_{ij} = \text{log} \frac{\rho_{ij}}{1 + \sum_{k:k \neq i} exp(\tau_{ik})} & i,j = 1, \dots,m \\
+    \text{where } &
+    \rho_{ij} =   
+      \begin{cases}
+        exp(\tau{ij})  & \text{for } i \neq j \\
+        1              & \text{for } i = j 
+      \end{cases}
+  \end{aligned}
+\end{align}
+
+##Estimation via the EM Algorithm
+  
+\pagebreak
 
 #References
