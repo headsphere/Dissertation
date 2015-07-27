@@ -1,5 +1,6 @@
-Project_Progress_Report.html
-Chapter_2.html
-Chapter_2_cache
-Chapter_2_files
+*.html
+*.docx
+*.pdf
+*_cache
+*_files
 scratch.txt
