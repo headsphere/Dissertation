@@ -1,0 +1,11 @@
+---
+output:
+  rmarkdown::tufte_handout: default
+---
+
+```{r child = 'Chapter 2.Rmd'}
+```
+```{r child = 'Appendix 1.Rmd'}
+```
+
+\newpage
