@@ -1,10 +1,4 @@
----
-title: "Appendix 2"
-output: 
-  rmarkdown::tufte_handout: default
----
-
-#Appendix 2: Monte-Carlo Simulation of Volume Buckets
+\chapter{Appendix 2: Monte-Carlo Simulation of Volume Buckets}
 
 ```{r}
 numSim = 1000

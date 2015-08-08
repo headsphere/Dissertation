@@ -1,21 +1,12 @@
 ---
-title: "Chapter 2"
 header-includes:
    - \usepackage[]{algpseudocode}
-output:
-  rmarkdown::tufte_handout: default
-  word_document: default
-bibliography: library.bib
-csl: harvard1.csl
 ---
 
-```{r echo=FALSE}
-options(digits = 3)
-```
 
-# HMM Model Derivation
+\chapter{HMM Model Derivation}
 
-## Independent Mixture Model
+# Independent Mixture Model
 
 This section will outline the derivation of the HMM for univariate poisson observed data. We will use a toy example in order to illustrate the derivation.
 
@@ -164,7 +155,7 @@ The mixture distribution parameters appear to be estimated satisfactorily.
 
 The next step is to introduce into the model a way of capturing the transition behaviour between the states over time.
 
-## Markov switching process
+# Markov switching process
 
 The independent mixture model is used to cater for the overdispersion noticed in some time series data. The second feature often found is that they exhibit serial dependece between the observations. This dependence is identified via the autocorrelation function of the data. To cater for this we model the dependence between the mixtures by introducing a Markov process. With this building block we will have completely defined the hidden Markov model. 
 
@@ -319,7 +310,7 @@ x = 1
 sum(delta %*% PMat(x))
 ```
 
-## Calculating the Likelihood
+# Calculating the Likelihood
 
 The first step to calculate the likelihood function is to extend the univariate marginal distribution $\eqref{eq:marginalNonStat}$ to a bivariate distribution. @zucchini show that $\eqref{eq:marginalNonStat}$ can be extended so that:
 
@@ -425,10 +416,11 @@ In addition to this scaling solution, we also introduce two parameter transforma
   \end{aligned}
 \end{align}
 
-##Estimation via the EM Algorithm
+#Estimation via the EM Algorithm
 
 As an alternative to direct numerical maximisation, often times the Expectation-Maximisation meta-algorithm is employed. EM is known as a meta-algorithm because rather than prescribing an explicit set of steps, it provides a framework that needs to be customised depending on the context. In the context of HMM's it can be useful due to the fact that the likelihood is guaranteed to increase for each iteration, and also that derivatives are not required (e.g. an optimiser such as `nlm` in R is not required). On the downside however, more implementation effort is often required, and convergence can sometimes be slow to achieve.
 
+##EM in General
 EM in general is an iterative scheme to find maximum likelihood estimates of parameters when some of the data are missing. Therefore by treating the hidden states of an HMM as those missing data, we can calculate what is known as the complete data log likelihood. The CDLL is the log likelihood of the parameters based on the observed and missing data
 
 The iterative scheme is as follows:
@@ -445,6 +437,7 @@ conditional expectation).
 - Assess convergence (with respect to some criterion) and repeat the E and
 M-steps until convergence is reached.
 
+##EM for Hidden Markov Models
 When applied in the context of an HMM, the CDLL is the log-likelihood of the observations $\mathbf{x}^{(T)}$ and the missing data $\mathbf{c}^{(T)}$ which is given by:
 
 \begin{align}

@@ -1,9 +1,7 @@
----
-output: 
-  rmarkdown::tufte_handout: default
----
+\chapter{References}
 
-#References
+TODO
+r write.bibtex(file="library.bib", append=FALSE,biblatex=TRUE)
 
 [^2010flashcrash]: https://en.wikipedia.org/wiki/2010_Flash_Crash
 

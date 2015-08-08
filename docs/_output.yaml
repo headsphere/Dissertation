@@ -1,0 +1,14 @@
+rticles::tufte_ebook: 
+  toc: false
+  latex_engine: xelatex
+  toc_depth: 3
+  number_sections: true
+  keep_tex: true
+html_document:
+  self_contained: false
+  theme: united
+  highlight: textmate
+rmarkdown::tufte_handout: default
+word_document: default
+bibliography: library.bib
+csl: harvard1.csl

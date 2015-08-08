@@ -1,11 +1,8 @@
 ---
 header-includes:
    - \usepackage[]{algorithmicx}
-output: 
-  rmarkdown::tufte_handout:
-    highlight: tango
-
 ---
+\chapter{Introduction}
 
 #Problem Background
 

@@ -1,10 +1,4 @@
----
-title: "Appendix 1"
-output: 
-  rmarkdown::tufte_handout: default
----
-
-#Appendix 1: Algorithm to Compute the VPIN Metric
+\chapter{Appendix 1: Algorithm to Compute the VPIN Metric}
 
 Based off algorithm found here[^vpin-calculate].
 
