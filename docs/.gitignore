@@ -3,4 +3,5 @@
 *.pdf
 *_cache
 *_files
+*.tex
 scratch.txt
