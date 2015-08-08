@@ -322,11 +322,15 @@ $$Pr(X_t = v, X_{t+k} = w) = \boldsymbol{\delta} \mathbf{P}(v) \boldsymbol{\Gamm
 
 This then can be generalised to a $T$-th order distribution and hence the likelihood for a set of observations $\mathbf{X}^{(T)} = (X_1,X_2,\dots,X_T)$ given the parameters of an HMM is:
 
-$$L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}$$
+\begin{equation}\label{eq:likelihood}
+  L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots   \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}
+\end{equation}
 
 A recursive algorithm can be defined to calculate the likelihood, first by defining the foward probability vector:
 
-$$\boldsymbol{\alpha_t} = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T)$$
+\begin{equation}\label{eq:forwardProb}
+  \boldsymbol{\alpha_t} = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T)
+\end{equation}
 
 From which the likelihood can now be recursively calculated:
 
@@ -428,7 +432,7 @@ The iterative scheme is as follows:
 - Choose the starting values of the parameters to be estimated
 
 - E-Step: Compute the conditional expectations of those functions of the
-missing data appear in the complete-data log-likelihood.
+missing data that appear in the complete-data log-likelihood.
 
 - M-step: Maximisation of the log-likelihood with respect to the set of
 parameters to be estimated (the missing data are substituted by their
@@ -450,7 +454,7 @@ When applied in the context of an HMM, the CDLL is the log-likelihood of the obs
   \end{aligned}
 \end{align}
 
-And then by introducing the notation:
+And then by introducing the following indicator variables:
 \begin{align}
   \begin{aligned}\nonumber
     u_j(t) & = 1 \iff c_t = j \\
@@ -460,7 +464,7 @@ And then by introducing the notation:
 
 We get:
 \begin{align}
-  \begin{aligned}\nonumber
+  \begin{aligned}\label{eq:cddl}
     \text{log} \Big ( Pr(\mathbf{x}^{(T)}, \mathbf{c}^{(T)}) \Big ) &  
     = \sum_{j=1}^m u_j(1) \text{log } \delta_j 
     + \sum_{j=1}^m \sum_{k=1}^m \Bigg ( \sum_{t=2}^T v_{jk}(t)   \Bigg ) \text{log } \gamma_{jk}
@@ -471,6 +475,70 @@ We get:
 
 
 This shows how with the use of the indicator variables $u_j(t)$ and $v_{jk}(t)$ the CDLL can partitioned into three terms that can be optimized separately. The first term depends only on the initial distribution, the second term depends only on the transition matrix, and the third term depends only on the parameters related to the state dependent distributions (Poisson, in our continuing example).
+
+###E Step
+
+The conditional expectations of the functions of the missing data $\mathbf{c}^{(T)}$ given the observations $\mathbf{x}^{(T)}$ must be computed, and hence the quantities $v_{jk}(t)$ and $u_j(t)$ would be replaced by them:
+
+\begin{equation}\label{eq:u}
+\hat{u}_j(t) = Pr(C_t=j | \mathbf{x}^{(T)})
+\end{equation}
+
+\begin{equation}\label{eq:v}
+\hat{v}_{jk}(t) = Pr(C_{t-1}=j, C_t =k | \mathbf{x}^{(T)})
+\end{equation}
+
+In calculating $Pr(C_t=j | \mathbf{x}^{(T)})$ we can use the previously calculated values $L_T$ \eqref{eq:likelihood} and $\boldsymbol{\alpha_t}$ \eqref{eq:forwardProb} along with a newly introduced backward probability vector $\boldsymbol{\beta_t}$ which is defined as follows:
+
+\begin{align}
+  \begin{aligned}\label{backwardProb}
+    \boldsymbol{\beta_t}' & = \boldsymbol{\Gamma} \mathbf{P}(x_{t+1}) \boldsymbol{\Gamma} \mathbf{P}(x_{t+2})  \dots  \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1}' \\
+    & = \Bigg ( \prod_{s=t+1}^T  \boldsymbol{\Gamma} \mathbf{P}(x_s) \Bigg) \mathbf{1}'
+  \end{aligned}
+\end{align}
+
+The reason for the name “backward probabilities” is that a recursion backward in time is used to calculate $\boldsymbol{\beta_t}$
+
+We now state the following propositions:
+^[Proved in @zucchini [pp. 60-63]]
+
+\begin{equation}\nonumber
+  \alpha_t(j) = Pr(\mathbf{X}^{(t)} = \mathbf{x}^{(t)}, C_t = j)
+\end{equation}
+
+\begin{equation}\nonumber
+  \beta_t(i) = Pr(\mathbf{X}_{t+1}^{T} = \mathbf{x}^{(t)} | C_t = i)
+\end{equation}
+
+\begin{align}
+  \begin{aligned}\nonumber
+  \alpha_t(i) \beta_{t}(i) & = Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}, C_t = i) \\
+    \text{and consequently } \boldsymbol{\alpha_t} \boldsymbol{\beta_t}' & = Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}) = L_T
+  \end{aligned}
+\end{align}
+
+And now finally:
+
+\begin{align}
+  \begin{aligned}\nonumber
+  \text{For } t & = 1, \dots , T, \\
+  Pr(C_t = j | \mathbf{X}^{(T)} = \mathbf{x}^{(T)}) & = \alpha_t(j) \beta_{t}(j) / L_T \\
+  \text{For } t & = 2, \dots , T, \\
+  Pr(C_{t-1} = j, C_t = k | \mathbf{X}^{(T)} = \mathbf{x}^{(T)}) & = \alpha_{t-1}(j) \gamma_{jk} p_k(x_t) \beta_{t}(k) / L_T 
+  \end{aligned}
+\end{align}
+
+With these steps in place we are now in a position to compute the conditional expectations \eqref{eq:u} and \eqref{eq:v} which replace $u_j(t)$  and $v_{jk}(t)$ respectively in the CDDL \eqref{eq:cddl}:
+
+\begin{equation}\label{eq:uHat}
+\hat{u}_j(t) = Pr(C_t=j | \mathbf{x}^{(T)}) = \alpha_t(j) \beta_{t}(j) / L_T
+\end{equation}
+
+\begin{equation}\label{eq:vHat}
+\hat{v}_{jk}(t) = Pr(C_{t-1}=j, C_t =k | \mathbf{x}^{(T)}) = \alpha_{t-1}(j) \gamma_{jk} p_k(x_t) \beta_{t}(k) / L_T 
+\end{equation}
+
+
+###M Step
   
-\pagebreak
 
