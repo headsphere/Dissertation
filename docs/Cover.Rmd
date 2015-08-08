@@ -1,11 +1,32 @@
 ---
+title: “A Hidden Markov Model approach to evaluating the effectiveness of Volume Synchronized Probability of Information-based Trading (VPIN)”
+header-includes:
+   - \usepackage[]{algpseudocode}
+   - \usepackage[]{verbatim}
 output:
-  rmarkdown::tufte_handout: default
+  rticles::tufte_ebook:
+    toc: true
+    latex_engine: xelatex
+    toc_depth: 3
+    number_sections: true
+    keep_tex: true
+  word_document: default
+bibliography: library.bib
+csl: harvard1.csl
 ---
 
+```{r child = 'Chapter 1.Rmd'}
+```
+\newpage
 ```{r child = 'Chapter 2.Rmd'}
 ```
+\newpage
 ```{r child = 'Appendix 1.Rmd'}
 ```
-
+\newpage
+```{r child = 'Appendix 2.Rmd'}
+```
+\newpage
+```{r child = 'References.Rmd'}
+```
 \newpage

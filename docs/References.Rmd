@@ -1,0 +1,22 @@
+---
+output: 
+  rmarkdown::tufte_handout: default
+---
+
+#References
+
+[^2010flashcrash]: https://en.wikipedia.org/wiki/2010_Flash_Crash
+
+[^vpin-calculate]:http://rof.oxfordjournals.org/content/suppl/2014/09/25/rfu041.DC1/Web_appedix.pdf
+
+[^vpin]: Easley, D., López De Prado, M. M., & O’Hara, M. (2012). Flow toxicity and liquidity in a high-frequency world. Review of Financial Studies, 25, 1457–1493. doi:10.1093/rfs/hhs053
+
+[^Leinweber]: Bethel, W., Leinweber, D., Ruebel, O., & Wu, K. (2011). Federal Market Information Technology in the Post Flash Crash Era: Roles for Supercomputing. SSRN Electronic Journal. doi:10.2139/ssrn.1939522
+
+[^timevarying]: Easley, D., Engle, R. F., O’hara, M., & Wu, L. (2008). Time-varying arrival rates of informed and uninformed trades. Journal of Financial Econometrics, 6, 171–207. doi:10.1093/jjfinec/nbn003
+
+[^tradeclassifiction]: Chakrabarty, B., Pascual, R., & Shkilko, A. (2012). Trade Classification Algorithms : A Horse Race between the Bulk-based and the Tick-based Rules.
+
+[^bulkclassifiction]: Easley, D., Lopez de Prado, M. M., & O’Hara, M. (2012). Bulk Classification of Trading Activity. SSRN Electronic Journal. doi:10.2139/ssrn.1989555
+
+[^hmm]: Yin, X., & Zhao, J. (2014). A Hidden Markov Model Approach to Information-Based Trading: Theory and Applications. Retrieved from http://papers.ssrn.com/abstract=2412321

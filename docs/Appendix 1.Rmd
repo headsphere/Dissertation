@@ -4,10 +4,45 @@ output:
   rmarkdown::tufte_handout: default
 ---
 
-```{r echo=FALSE}
-library(knitr)
-read_chunk("../code/A1.R")
-```
+#Appendix 1: Algorithm to Compute the VPIN Metric
 
-```{r PoiossonHMM_MLE, echo=TRUE}
-```
+Based off algorithm found here[^vpin-calculate].
+
+\begin{algorithmic}
+ \label{Data}
+  \begin{enumerate}
+    \item Time series of transactions of a particular instrument ($T_i$, $P_i$, $V_i$)
+      \begin{enumerate}
+      \item $T_i$: Time of the trade.
+      \item $P_i$: Price at which securities were exchanged.
+      \item $V_i$: Volume exchanged
+      \end{enumerate}
+    \item $V$: Volume size (determined by user of the formula)
+    \item $n$: Sample of volume buckets used in the estimation.
+  \end{enumerate}
+  }
+ \label{Prepare Equal Volume Buckets }
+  \begin{enumerate}
+   \item Sort transactions by time ascending: $T_{i+1} \geq T_i, \forall i$
+   \item Compute $\Delta P_i, \forall i$
+   \item Expand the number of observations by repeating each observation $\Delta P_i$ as many times as $V_i$. This generates a total of $I = \sum_i V_i$ observations $\Delta P_i$.
+   \item Re-index $\Delta P_i$ observations, $i = 1, ...,I$
+   \item Initiate counter: $\tau = 0$
+   \item
+\begin{comment}
+    \While{ $\tau V < I$ }{
+     \begin{enumerate}
+     \item Add one unit to $\tau$
+     \item $\forall i \in [(\tau - 1)V + 1, \tau V]$, split volume between buy or sell intitiated:
+     \begin{enumerate}
+      \item Assign to Vb the number of observations classified as buy:\\
+      $V_{\tau}^B = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}}\right)$
+      \item  Assign to Vs the number of observations classified as sell:\\
+      $V_{\tau}^S = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i \left( 1 - Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}} \right) \right) = V - V_{\tau}^B$
+     \end{enumerate}
+    \end{enumerate}
+    }
+\end{comment}
+   \item Set $L=\tau - 1$
+   \end{enumerate}
+\end{algorithmic}

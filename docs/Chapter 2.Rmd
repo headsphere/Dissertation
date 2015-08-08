@@ -11,13 +11,6 @@ csl: harvard1.csl
 
 ```{r echo=FALSE}
 options(digits = 3)
-
-PlotTsAndDensity <- function (x) {
-  #par(mfrow = c(1, 2))
-  plot.ts(x, xlab = NULL, ylab = NULL)
-  hist(x, breaks=30, freq = F, main=NULL, xlab = NULL, ylab = NULL)
-  lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
-}
 ```
 
 # HMM Model Derivation
@@ -64,11 +57,16 @@ x = c(d1,d2)
 
 This code generates a series of x values according to a mixture of two poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
 
-We can see from both the following plots of the time series and the histograms (with fitted density) the data appears to conform to two separate distributions, or states:  
+We can see from both the following plots of the time series and the histograms the data appears to conform to two separate distributions, or states, as it were:  
 
-```{r echo=FALSE, fig.fullwidth = FALSE}
-PlotTsAndDensity(x)
+```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Time series of simulated Poisson mixture"}
+  plot.ts(x, xlab = NULL, ylab = NULL)
 ```
+```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Histogram of simulated Poisson mixture with fitted density"}
+  hist(x, breaks=30, freq = F, main=NULL, xlab = NULL, ylab = NULL)
+  lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
+```
+
 
 Before maximisiming the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$ and logit transforming $\delta$.
 
@@ -108,7 +106,7 @@ delta1 = 1 - delta2
 
 Now we have all the building blocks to maximise the negative log-likelihood for a two-state mixture distribution:
 
-```{r warning=FALSE, cache=TRUE}
+```{r warning=FALSE, cache=FALSE}
 f <- function(theta,data) {
   eta <- theta[1:2]
   tau <- theta[3]
@@ -175,11 +173,13 @@ If we define $\{C_t : t = 1,2, \dots \}$ as the unbserved hidden states, and $\{
 $$Pr(C_t = i | C^{(t-1)}) = Pr(C_t = i | C_{t-1}), t = 2,3,\dots$$
 $$Pr(X_t = x | X^{(t-1)}, C^{(t)}) = Pr(X_t = x | C_t), t \in \mathbb{N}$$
 
-As shown in the directed graph below, this is saying that when $C_t$ is known the distribution of $X_t$ only depends on $C_t$
+As is illustrated in Figure \ref{fig:hmm-states}, this is saying that when $C_t$ is known the distribution of $X_t$ only depends on $C_t$
 
-\begin{figure}
+\begin{marginfigure}
   \includegraphics{images/hmm-states}
-\end{figure}
+  \caption{Hidden state directed graph}
+  \label{fig:hmm-states}
+\end{marginfigure}
 
 For discrete distributions we can define the m-state dependant distribution function as:
 
@@ -406,9 +406,9 @@ prob
 
 In addition to this scaling solution, we also introduce two parameter transformations in a similar vein to what we did for the independent mixture models. Because it has been shown that the performance of constrained optimizers such as R's `constrOptim` can degrade when the parameter optimums lie close to their boundaries of the parameter space, we instead apply the following transformations to $\boldsymbol{\Gamma}$ and $\boldsymbol{\lambda}$
 
-- As before \eqref{eq:paramN2W}, \eqref{eq:paramN2W}, because the parameters $\lambda_i$ for a Poisson HMM are limited to be non-negative, we apply the log transformation to get the working parameters $\eta_i$, and then exponentiate them to obtain the natural parameters again.
+- As shown in \eqref{eq:paramN2W} and \eqref{eq:paramW2N}, because the parameters $\lambda_i$ for a Poisson HMM are limited to be non-negative, we apply the log transformation to get the working parameters $\eta_i$, and then exponentiate them to obtain the natural parameters again.
 
-- Because the rows of the $\boldsymbol{\Gamma}$ matrix must all sum to one and the individual $\gamma_{ij}$ must all be non=-negative, we apply the following transformation. For details see @zucchini [pp. 48-49]:
+- Because the rows of the $\boldsymbol{\Gamma}$ matrix must all sum to one and the individual $\gamma_{ij}$ must all be non=-negative, we apply the following transformation. ^[For details see @zucchini [pp. 48-49]]
 
 \begin{align}
   \begin{aligned}\nonumber
@@ -427,7 +427,7 @@ In addition to this scaling solution, we also introduce two parameter transforma
 
 ##Estimation via the EM Algorithm
 
-As an alternative to direct numerical maximisation, often times the Expectation-Maximisation meta-algorithm is employed. EM is known as a meta-algorithm because rather than prescribing an explicit set of steps, it provides a framework that needs to be customised depending on the context. In the context of HMM's it can be useful due to the fact that the likelihood is guaranteed to increase for each iteration, and also that derivatives are not required (e.g. an optimiser such as nlm in R is not required). On the downside however, more implementation effort is often required, and convergence can sometimes be slow to achieve.
+As an alternative to direct numerical maximisation, often times the Expectation-Maximisation meta-algorithm is employed. EM is known as a meta-algorithm because rather than prescribing an explicit set of steps, it provides a framework that needs to be customised depending on the context. In the context of HMM's it can be useful due to the fact that the likelihood is guaranteed to increase for each iteration, and also that derivatives are not required (e.g. an optimiser such as `nlm` in R is not required). On the downside however, more implementation effort is often required, and convergence can sometimes be slow to achieve.
 
 EM in general is an iterative scheme to find maximum likelihood estimates of parameters when some of the data are missing. Therefore by treating the hidden states of an HMM as those missing data, we can calculate what is known as the complete data log likelihood. The CDLL is the log likelihood of the parameters based on the observed and missing data
 
@@ -445,17 +445,39 @@ conditional expectation).
 - Assess convergence (with respect to some criterion) and repeat the E and
 M-steps until convergence is reached.
 
-When applied to the context of an HMM, the CDLL is the log-likelihood of the observations $\mathbf{x}^{(T)}$ and the missing data $\mathbf{c}^{(T)}$ which is given by:
+When applied in the context of an HMM, the CDLL is the log-likelihood of the observations $\mathbf{x}^{(T)}$ and the missing data $\mathbf{c}^{(T)}$ which is given by:
 
 \begin{align}
   \begin{aligned}\nonumber
     \text{log} \Big ( Pr(\mathbf{x}^{(T)}, \mathbf{c}^{(T)}) \Big ) &  
-    = \text{log} \Bigg ( \delta_{c_1} \prod_{t=2}^T \gamma_{c_{t-1},c_t} \Bigg ) 
+    = \text{log} \Bigg ( \delta_{c_1} \prod_{t=2}^T \gamma_{c_{t-1},c_t} \prod_{t=1}^T p_{c_t}(x_t) \Bigg )\\
+ &  = \text{log } \delta_{c_1} 
+    + \sum_{t=2}^T \text{log }\gamma_{c_{t-1},c_t} 
+    + \sum_{t=1}^T \text{log } p_{c_t}(x_t) 
+  \end{aligned}
+\end{align}
+
+And then by introducing the notation:
+\begin{align}
+  \begin{aligned}\nonumber
+    u_j(t) & = 1 \iff c_t = j \\
+    v_{jk}(t) & = 1 \iff c_{t-1} = j \text{ and } c_t = k
+  \end{aligned}
+\end{align}
+
+We get:
+\begin{align}
+  \begin{aligned}\nonumber
+    \text{log} \Big ( Pr(\mathbf{x}^{(T)}, \mathbf{c}^{(T)}) \Big ) &  
+    = \sum_{j=1}^m u_j(1) \text{log } \delta_j 
+    + \sum_{j=1}^m \sum_{k=1}^m \Bigg ( \sum_{t=2}^T v_{jk}(t)   \Bigg ) \text{log } \gamma_{jk}
+    + \sum_{j=1}^m \sum_{t=1}^T u_j(t) \text{log } p_j(x_t) \\
+ &  = \text{term 1 } + \text{ term 2 } + \text{ term 3} 
   \end{aligned}
 \end{align}
 
 
+This shows how with the use of the indicator variables $u_j(t)$ and $v_{jk}(t)$ the CDLL can partitioned into three terms that can be optimized separately. The first term depends only on the initial distribution, the second term depends only on the transition matrix, and the third term depends only on the parameters related to the state dependent distributions (Poisson, in our continuing example).
   
 \pagebreak
 
-#References

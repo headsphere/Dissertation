@@ -1,0 +1,102 @@
+---
+header-includes:
+   - \usepackage[]{algorithmicx}
+output: 
+  rmarkdown::tufte_handout:
+    highlight: tango
+
+---
+
+#Problem Background
+
+VPIN is an extension of the PIN model developed by O'Hara, Lopez and Easley (hereafter known as ELO) used to identify the probability of information-based trading[^vpin]. That is, if one is a non-informed participant such as a market-maker, what is the probability of dealing with an informed trader, and hence becoming subject to adverse selection. This is a critical metric for market makers as it enables them to set appropriate bid-ask prices such that the spread compensates them for the probability of dealing with an insider.
+
+For this reason PIN has been used as a metric to measure the extent of so-called order flow toxicity. If the order flow becomes too toxic, market makers are forced out of the market. As they withdraw, liquidity disappears, which increases even more the concentration of toxic flow in the overall volume, which then triggers a feedback mechanism that forces even more market makers out. This cascading effect has caused  liquidity-induced crashes in the past, the 2010 Flash Crash being one (major) example of it[^2010flashcrash]. One hour before the flash crash, order flow toxicity was at historically high levels relative to recent history. ELO claim that using the VPIN metric, this crash could have been predicted one hour before it actually happened.
+
+The theoretical underpinning for VPIN is based off inferring toxicity from trade imbalances using so-called volume synchronised time bars. This necessitates using a trade classification algorithm to identify trades as either buys or sells. The procedure has been controversial however with several papers by Andersen and Bondarenko refuting the claims made by ELO. 
+
+VPIN's theory is consistent with the anecdotal evidence reported by a joint SEC-CFTC study on the events of May 6, 2010. Given the relevance of these findings, the S.E.C. requested an independent study to be carried out by the Lawrence Berkeley National Laboratory. This Government laboratory concluded:[^Leinweber]
+
+>This [VPIN] is the strongest early warning signal known to us at this time.
+
+The work completed to date has been primarily in the areas of data sourcing, calculating simulated PIN and VPIN data, and additionally a large amount of literature review. This report is the result of the work completed so far.
+
+#Plan for Remaining Work
+
+##Simulation Study
+
+The first task is to identify whether a Hidden Markov Model will execute the parameter estimation correctly. Specifically I will seek to identify whether an HMM can correctly identify the hidden intraday market states and from there conclude whether VPIN is an accurate measure of those states. To this end I will perform a simulation analysis where the hidden states are known beforehand (in terms of the sequential trade model parameters)
+
+The simple sequential trade model is as follows. Denote a security's price as $S$. Its present value is $S_1$. Once a certain amount of new information has been incorporated into the price, S will be either $S_B$ (bad news) or $S_G$ (good news). There is a probability $\alpha$ that new information will arrive within the time-frame of the analysis, and a probability $\delta$ that the news will be bad  (i.e., $1 - \delta$ that the news will be good). Traders are classified into two types: So-called noise, or liquidity traders, are those with no information based reason to trade. Their arrivals are measured as a poisson process with rate $\epsilon$. Information-based traders on the other hand are those that are trading based off some private information that has not been priced into the asset. They are also modelled as a poisson process, with arrival rate $\mu$. 
+
+If an information event arrives and it is a 'good news' event, both uninformed and informed traders buy, while only uninformed traders sell. Conversely if a 'bad news' information event occurs only uninformed traders buy, while both informed and uninformed traders sell. If no information event occurs then only uninformed traders are in the market. The model is visually explained the in the decision tree in Figure 1.  
+
+\begin{figure*}[h]
+  \includegraphics{images/sequential_trade_model}
+\end{figure*}
+
+The original PIN model requires the estimation of four non-observable parameters, namely $\alpha$, $\delta$, $\mu$, and $epsilon$. This was originally done via Maximum likelihood, through the fitting of a mixture of three Poisson distributions. VPIN can in some regards be considered a high-frequency estimate of PIN which takes into account the time-varying nature of the data. Instead of calculating liquidity based off clock-time, VPIN uses what is called volume-time, whereby trades are placed into equally sized buckets each with a uniform amount of volume. The intuition behind this is that in a high-frequency environment, these volume bars will be spaced out widely when there is little information-based trading, and packed tightly when there is a higher amount. The idea is that more relevant is a piece of information, more volume it will attract. Within each of these bars the number of trades that are buys or sells are inferred, and then VPIN is calculated as the degree of imbalance between buys and sells. If we have $\tau = 1,2,... n$ volume buckets, within each bucket trades are classified as buys $V_{\tau}^B$, and sells $V_{\tau}^S$ where $V = V_{\tau}^B + V_{\tau}^S$ for each $\tau$. Using this approach, the parameters can be estimated anlytically instead of numerically.
+
+A crucial part of this calculation involves the classification of trades into buys and sells, as traditional order-book data sources do not include the trade direction. Rather than using the Tick-rule, Lee-Ready or other trade classification techniques, ELO propose a new volume classification method called Bulk Volume Classification. This departs from standard trade classification schemes in two ways: First, volume is classified in bulk, and second this methodology classifies part of a bar's volume as buy, and the remainder as sell. Empirical studies have shown Bulk Volume Classification to be more accurate than the Tick-rule, despite of not requiring level-1 tick data (only bars)[^bulkclassifiction]. Within a volume bucket, the amount of volume classified as buy is
+
+\begin{equation} \label{eq:vol_buy}
+V_{\tau}^B = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}}\right)
+\end{equation}
+
+where $t(\tau)$ is the index of the last (volume or time) bar included in bucket $\tau$, $V_{\tau}^B$ is the buy volume (traded against the Ask), $V_i$ is the total volume per bucket, $Z$ is the Standard Normal Distribution, and $\sigma_{\Delta S}$ is the standard deviation of price changes betwenen (volume or time) bars. Because all buckets contain the same amount of volume $V$, 
+
+\begin{equation} \label{eq:vol_sell}
+V_{\tau}^S = \sum_{i = t(\tau - 1) + 1}^{t(\tau)} V_i \left( 1 - Z \left(\frac{S_i - S_{i-1}}{\sigma_{\Delta S}} \right) \right) = V - V_{\tau}^B
+\end{equation}
+
+The algorithm to compute the VPIN metric is in Appendix A.
+
+The dynamics of buys and sells are driven by the sequential trade model parameters mentioned previously ($\alpha$, $\delta$, $\mu$ and $\epsilon$). The expected arrival rate of informed trade becomes: $E[V_{\tau}^B - V_{\tau}^S] = \alpha \mu(2 \delta - 1)$ and the absolute expected values for sufficiently large $\mu$ is $E[|V_{\tau}^B - V_{\tau}^S|] \approx \alpha \mu$.
+
+The total expected arrival rate is:
+
+$$\frac{1}{n}\sum_{\tau = 1}^n (V_{\tau}^B + V_{\tau}^S) = V = $$
+
+$$\underbrace{\alpha (1 - \delta) (\epsilon + \mu + \epsilon) }_\text{Volume from good news} + \underbrace{\alpha \delta (\mu + \epsilon + \epsilon) }_\text{Volume from bad news} + \underbrace{(1 - \alpha) (\epsilon + \epsilon) }_\text{Volume from no news} = \alpha \mu + 2 \epsilon$$
+
+VPIN is then calculated as:
+
+$$VPIN = \frac{\alpha \mu}{\alpha \mu + 2 \epsilon} = \frac{\alpha \mu}{V} = \frac{\sum_{\tau = 1}^n (V_{\tau}^S - V_{\tau}^B)}{(2 \delta - 1)n V} \approx  \frac{\sum_{\tau = 1}^n |V_{\tau}^S - V_{\tau}^B|}{n V}$$
+
+To simulate the volume bars across the course of a hypothetical trading day I generate data according to the following procedure: Generate a Bernouilly random variable with parameter $\alpha$ to determine whether an information event has ocurred within this volume bar. Then generate a second Bernouilly R.V. with parameter $\delta$ to determine whether the event was a 'good' or a 'bad' information event. According to the sequential trade model we then simulate the number of buys and sells for the volume bar using Possion R.V.s. This is repeated for the total number of expected volume bars for the trading days, then this hypothetical day can be simulated a large number of times in order to calculate an expected VPIN value. The code to generate Monte Carlo simulations of the volume bars has been outlined in Appendix B.  
+
+A further extension of the basic model is one where the arrival rates of informed and uninformed trades are time-varying. Following the results of Easley, Engle, O'Hara and Wu (2008)[^timevarying] the arrival rates can be modelled as a bivariate vector autoregressive process where $(\alpha \mu_t, 2 \epsilon_t)'$ contains the time-$(t - 1)$ forecast of the arrival rates at time $t$, $b_{t-1}$ and $s_{t-1}$ are observed buy and sell orders at time $t-1$, $\odot$ denotes the Hadamard product, the vector
+$g = (g_1, g_2)'$ captures the growth rates of the two intensities, $\omega$ is a $2 \times 1$ parameter vector and $\phi$ and $\psi$ are $2 \times 2$ parameter matrices:
+
+$$\begin{pmatrix}
+  \alpha \mu_t \\
+  2 \epsilon_t 
+ \end{pmatrix} = \omega \odot e^{g(t-1)} + \phi 
+ \begin{bmatrix}
+   \begin{pmatrix}
+    \alpha \mu_{t-1} \\
+    2 \epsilon_{t-1} 
+   \end{pmatrix} \odot e^{g(t-1)}
+ \end{bmatrix}
+ + \psi 
+ \begin{pmatrix}
+  |b_{t-1} - s_{t-1}| \\
+  b_{t-1} + s_{t-1} - |b_{t-1} - s_{t-1}| \epsilon_t 
+ \end{pmatrix}$$
+
+This simulated data will then be modelled as an HMM and the hidden states will be subsequently decoded using the EM algorithm. I shall use the Akaike Information Criterion (AIC) to identify the most appropriate model. The selecte model shall be evaluated be seeing its effectiveness at identifying the most likely hidden state for each volume bucket. This shall be measured as a missclassification rate. It is anticipated that an HMM will be well suited to modelling the time-varying nature of the VPIN time series.
+
+One complication may arise with the number of hudden states the model suggests. That is the number of states may not lend itself to any sort of intuitive interpretation. Previous studies have shown that using the k-means clustering algorithm may assist in grouping related states together[^hmm].  
+
+## Empirical data analysis
+
+Once an appropriate HMM model has been identified and $m$ the optimum number of hidden states has been established, I am then planning on letting this model run on a selection of real order book data. I have obtained access to consolidated order book data from the NYSE TAQ database. Studies have shown that even though TAQ data is unsigned (e.g. buys and sells are not labelled) the Bulk Volume Classifier employed by ELO is as accurate (and sometimes more accurate) than the signed order book feed from the NASDAQ INET platform.[^tradeclassifiction]
+
+Using this real order book data I will extract order book data around known liquidity crashes since 2010. The plan is then to see what sort of relationship there is between the VPIN metric and the evolution of the hidden states over the course of these known market crashes. If a high (e.g. 95th percentile) value of the VPIN CDF correlates closely with any set of hidden states we can then conclude that VPIN is indeed predicting (or describing) some form of abnormal liquidity event. 
+
+##Further tasks 
+
+- To see whether these extreme hidden states are exclusively associated with these liquidity crashes or is there are large number of false positives.   
+
+- Does VPIN indeed predict these crashes or is it simply describing them as they happen.
+
