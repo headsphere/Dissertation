@@ -1,0 +1,82 @@
+\chapter{HMM Model Applied to VPIN}
+
+#Calculating the Likelihood
+
+Now that the mathematical foundations of the HMM have been laid down, we are ready to extend the model for the problem that this paper is examining. As explained in the introduction, the data we are attempting to fit an HMM with is the number of buy and sell orders per volume bucket. That is, for each volume bucket $t$ we will have a bivariate observable trading process $\{X_t \equiv (B_t, S_t): t = 1,2, \dots T \}$. $B_t$ and $S_t$ are defined as the buyer and seller-initiated orders. We can further define the unobserved hidden state stochastic process $\{C_t \equiv (C_{b;t}, C_{s;t}) : t = 1,2, \dots T\}$.
+
+The probability of observing $b_t$ buy orders and $s_t$ sell orders is driven by the fact that they arrive according to independent Poisson process, and as such, conditional on the state at a particular volume bucket $t$ is $(i, j)$ we can state:
+
+\begin{align}
+ \begin{aligned}\nonumber
+ p_{i,j}(X) &= Pr(X_t = x | C_{b;t} = i, C_{s;t} = j) \\
+            &= p_i(b_t) p_j(s_t) \\ 
+            &= e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} \times e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !} \\ 
+  \end{aligned}
+\end{align}
+
+This implies that any state $(i, j)$ that the market is in for the duration of the volume bucket is represented by a pair of distribution parameters $\lambda_{b;i}$ and $\lambda_{s;j}$. 
+
+The $mn \times mn$ diagonal matrix of conditional probabilities ${P}(x)$ is defined as:
+$$\mathbf{P}(x) = \begin{pmatrix}
+                   p_1(b_t) p_1(s_t) &        & 0 \\
+                                     & \ddots &   \\
+                   0                 &        & p_m(b_t) p_n(s_t)
+                  \end{pmatrix}$$
+
+We can now extend the unconditional state distribution defined in \eqref{eq:stateDist} as follows:
+
+\begin{equation}\nonumber
+  u_{i,j}(t) = Pr(C_{b;t} = i, C_{s;t} = j), t = 1,\dots,T
+\end{equation}
+
+Or in matrix format:
+
+\begin{equation}\nonumber
+  u_{i,j}(t) = \begin{pmatrix}
+                     u_{1,1}(t),\dots,u_{1,n}(t), \dots u_{m,1}(t), \dots u_{m,n}(t)
+               \end{pmatrix}
+\end{equation}
+
+The marginal distribution of $X$ extends logically from \eqref{eq:marginalNonStatWorking}, showing the unconditional probability of observing $x_t = (b_t, s_t)$ within volume bucket $t$:
+
+\begin{align}
+ \begin{aligned}\nonumber
+    Pr(X_t = x) &= \sum_{i=1}^m \sum_{j=1}^n Pr(C_{b;t} = i, C_{s;t} = j) Pr(X_t = x | C_{b;t} = i, C_{s;t} = j) \\
+                &= \sum_{i=1}^m \sum_{j=1}^n u_{i,j}(t) p_{i,j}(x) \\
+                &= \begin{pmatrix}
+                     u_{1,1}(t),\dots,u_{1,n}(t), \dots u_{m,1}(t), \dots u_{m,n}(t)
+                   \end{pmatrix}
+                   \begin{pmatrix}
+                     p_1(b_t) p_1(s_t) &        & 0 \\
+                                       & \ddots &   \\
+                     0                 &        & p_m(b_t) p_n(s_t)
+                   \end{pmatrix}
+                   \begin{pmatrix}
+                     1 \\
+                     \vdots \\
+                     1 
+                   \end{pmatrix} \\
+                &= \mathbf{u}(t) \mathbf{P}(x) \mathbf{1'}
+ \end{aligned}
+\end{align}
+
+The transition probability matrix $\boldsymbol{\Gamma}(t)$ which is the $mn \times mn$ matrix of transition probabilities at state $t$ is defined as:
+
+$$\boldsymbol{\Gamma}(1) = 
+\begin{pmatrix}
+  \gamma_{1,1;1,1}   \qquad \gamma_{1,1;1,2}   & \cdots & \gamma_{1,1;m,n-1}   \qquad \gamma_{1,1;m,n}\\
+  \gamma_{1,2;1,1}   \qquad \gamma_{1,2;1,2}   &        & \gamma_{1,2;m,n-1}   \qquad \gamma_{1,2;m,n}\\
+  \vdots                                       & \ddots & \vdots  \\
+  \gamma_{m,n-1;1,1} \qquad \gamma_{m,n-1;1,2} &        & \gamma_{m,n-1;m,n-1} \qquad \gamma_{m,n-1;m,n}\\
+  \gamma_{m,n;1,1}   \qquad \gamma_{m,n;1,2}   & \cdots & \gamma_{m,n;m,n-1}   \qquad \gamma_{m,n;m,n}
+\end{pmatrix}$$
+
+Where $\gamma_{i,j;k,l}(t) = Pr(C_{b;t+1} = k, C_{s;t+1} = l | C_{b;t} = i, C_{s;t} = j)$ is defined as the probability of volume bucket $t+1$ being in the state $(k,l)$ given that at bucket $t$ was in state $(i,j)$. 
+
+The likelihood $L_T$ for the bivariate independent Poisson HMM is then formulated in exactly the same way as for the basic model \eqref{eq:likelihood} by calculating recursively using the forward probabilities $\boldsymbol{\alpha_t}$:
+
+$$L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots   \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}$$
+
+#Estimation via EM
+
+#Estimation of Trading Motives via K-Means Clustering

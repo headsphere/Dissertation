@@ -3,14 +3,6 @@ title: “A Hidden Markov Model approach to evaluating the effectiveness of Volu
 header-includes:
    - \usepackage[]{algpseudocode}
    - \usepackage[]{verbatim}
-output:
-  rticles::tufte_ebook:
-    toc: true
-    latex_engine: xelatex
-    toc_depth: 3
-    number_sections: true
-    keep_tex: true
-  word_document: default
 bibliography: library.bib
 csl: harvard1.csl
 ---
@@ -39,6 +31,9 @@ options(digits = 3)
 ```
 \newpage
 ```{r child = 'Chapter 2.Rmd'}
+```
+\newpage
+```{r child = 'Chapter 3.Rmd'}
 ```
 \newpage
 ```{r child = 'Appendix 1.Rmd'}

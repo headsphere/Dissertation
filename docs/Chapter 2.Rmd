@@ -159,7 +159,7 @@ The next step is to introduce into the model a way of capturing the transition b
 
 The independent mixture model is used to cater for the overdispersion noticed in some time series data. The second feature often found is that they exhibit serial dependece between the observations. This dependence is identified via the autocorrelation function of the data. To cater for this we model the dependence between the mixtures by introducing a Markov process. With this building block we will have completely defined the hidden Markov model. 
 
-If we define $\{C_t : t = 1,2, \dots \}$ as the unbserved hidden states, and $\{X_t : t = 1,2, \dots \}$ as the observed data points, we can say a hidden Markov is a dependent mixture where:
+If we define $\{C_t : t = 1,2, \dots T \}$ as the unobserved hidden states, and $\{X_t : t = 1,2, \dots T \}$ as the observed data points, we can say a hidden Markov is a dependent mixture where:
 
 $$Pr(C_t = i | C^{(t-1)}) = Pr(C_t = i | C_{t-1}), t = 2,3,\dots$$
 $$Pr(X_t = x | X^{(t-1)}, C^{(t)}) = Pr(X_t = x | C_t), t \in \mathbb{N}$$
@@ -172,7 +172,7 @@ As is illustrated in Figure \ref{fig:hmm-states}, this is saying that when $C_t$
   \label{fig:hmm-states}
 \end{marginfigure}
 
-For discrete distributions we can define the m-state dependant distribution function as:
+For discrete distributions we can define the m-state dependent distribution function as:
 
 \begin{equation} \label{eq:dependantDist}
   p_i(X) = Pr(X_t = x | C_t = i), i,2,\dots,m
@@ -189,7 +189,7 @@ Additionally we can define the unconditional probability of being in state $i$ a
 We will often want to calculate the marginal distribution of $X$. This can be achieved by summing over the states and using the hidden state $\eqref{eq:stateDist}$ and state-dependent $\eqref{eq:dependantDist}$ distributions:
 
 \begin{align}
- \begin{aligned}\nonumber  
+ \begin{aligned}\label{eq:marginalNonStatWorking}
     Pr(X_t = x) &= \sum_{i=1}^m Pr(C_t = i) Pr(X_t = x | C_t = i) \\
                 &= \sum_{i=1}^m u_i(t) p_i(x) \\
                 &= \begin{pmatrix}
@@ -211,7 +211,7 @@ We will often want to calculate the marginal distribution of $X$. This can be ac
  
 $\mathbf{u}(t)$ is the distribution of the hidden states, and $\mathbf{P}(x)$ is the state-dependent distribution of the observations. $\mathbf{u}(1)$ is defined as the initial distribution of the Markov chain.
 
-The diagonal matrix of conditional probabilities ${P}(x)$ defined as:
+The $m \times m$ diagonal matrix of conditional probabilities ${P}(x)$ defined as:
 $$\mathbf{P}(x) = \begin{pmatrix}
                    p_1(x) &        & 0 \\
                           & \ddots &   \\
@@ -247,7 +247,7 @@ $$\boldsymbol{\Gamma}(1) = \begin{pmatrix}
                              \gamma_{m1} & \cdots & \gamma_{mm}
                            \end{pmatrix}$$
 
-$$\gamma_{ij}(t) = Pr(C_{s+t} = j | C_s = i)$$
+$$\gamma_{ij}(t) = Pr(C_{t+1} = j | C_t = i)$$
 
 Because the Markov chain satisfies the Chapman-Kolmogorov equations we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ (where $\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
 
@@ -277,7 +277,7 @@ statdist <- function(gamma){
 }
 ```
 
-To illustrate this concept, lets extend the example we used previously this time introducing a hypothetical transition matrix:
+To illustrate this concept, we can extend the example we used previously this time introducing a hypothetical transition matrix:
 
 ```{r}
 gamma = matrix(c(0.9,0.1,0.4,0.6), nrow = 2, byrow = TRUE)
@@ -326,7 +326,7 @@ This then can be generalised to a $T$-th order distribution and hence the likeli
   L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots   \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}
 \end{equation}
 
-A recursive algorithm can be defined to calculate the likelihood, first by defining the foward probability vector:
+A recursive algorithm can be defined to calculate the likelihood, first by defining the forward probability vector:
 
 \begin{equation}\label{eq:forwardProb}
   \boldsymbol{\alpha_t} = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots \boldsymbol{\Gamma} \mathbf{P}(x_T)
@@ -552,3 +552,4 @@ After the E step is complete, the M Step is now to maximise the CDDL \eqref{eq:c
     & & \text{ that is, by } \hat{\lambda}_j = \frac{\sum_{t=1}^T \hat{u}_j(t) x_t}{\sum_{t=1}^T \hat{u}_j(t)}
   \end{aligned}
 \end{align}
+
