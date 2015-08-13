@@ -185,7 +185,10 @@ pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,
   print(paste("No convergence after",maxiter,"iterations"))  
   NA                                                         
 }                                                           
-
+dpois.bi <- function(x, y, lambda){
+  browser()
+  dpois(x, lambda) * dpois(y, lambda)
+  }
 
 lambda_buy = c(3, 15)
 lambda_sell = c(10, 40)
