@@ -1,5 +1,5 @@
 rticles::tufte_ebook: 
-  toc: false
+  toc: true
   latex_engine: xelatex
   toc_depth: 3
   number_sections: true
