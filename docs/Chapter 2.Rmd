@@ -540,7 +540,7 @@ With these steps in place we are now in a position to compute the conditional ex
 
 ###M Step
   
-After the E step is complete, we now follow the M Step by maximising the CDDL \eqref{eq:cddl} with respect to the three sets of parameters of interest, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$ and the parameters of the state-dependent distributions, namely $\lambda_1$,...,$\lambda_m$.^[We replace $p_j(x_t)$ in the CDDL with $e^{-\lambda_j} \lambda_j^x / x!$]
+After the E step is complete, we now follow the M Step by maximising the CDDL \eqref{eq:cddl} with respect to the three sets of parameters of interest, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$ and the parameters of the state-dependent distributions, namely $\lambda_1$,...,$\lambda_m$.\marginnote{We replace $p_j(x_t)$ in the CDDL with $e^{-\lambda_j} \lambda_j^x / x!$}
 
 \begin{align}
   \begin{aligned}\nonumber

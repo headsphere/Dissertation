@@ -90,7 +90,7 @@ By examining the original CDDL equation we introduced in \eqref{eq:cddl}, we can
   \end{aligned}
 \end{align}
 
-First we extend the original indicator variables^[Confusingly, @zucchini re-use the notation $u_j$ which has already been used to denote the unconditional state distribution]:
+First we extend the original indicator variables \marginnote{Confusingly, @zucchini re-use the notation $u_j$ which has already been used to denote the unconditional state distribution}:
 
 \begin{align}
   \begin{aligned}\nonumber
@@ -130,6 +130,18 @@ Again, following the univariate examples \eqref{eq:uHat} and \eqref{eq:vHat} we 
 
 ## M Step
 
-On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPIN} with respect to the four sets of parameters, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$, $\lambda_{b;i}$ and $\lambda_{s;j}$. The state dependent distribution as stated here \eqref{eq:bivarPois} is the independent bivariate Poisson distribution:  $e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} \times e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$
+On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPIN} with respect to the four sets of parameters, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$, $\lambda_{b;i}$ and $\lambda_{s;j}$. The state dependent distribution $p_{i,j}(x_t)$ as stated here \eqref{eq:bivarPois} is the independent bivariate Poisson distribution:  $e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$ \marginnote{For proof of this maximisation see appendix TODO}
+
+\begin{align}
+  \begin{aligned}\nonumber
+    \text{Term to maximise} & \qquad \text{Parameter} & \text{Solution} \\
+    \sum_{i=1}^m \sum_{j=1}^n u_{i,j}(1) \text{log } \delta_{i,j}                                             &\qquad \boldsymbol{\delta} & \delta_{i,j} = \frac{\hat{u}_{i,j}(1)}{ \sum_{i=1}^m \sum_{j=1}^n \hat{u}_{i,j}(1)} = \hat{u}_{i.j}(1)\\
+    \sum_{i,k=1}^m \sum_{j,l=1}^n \Bigg ( \sum_{t=2}^T v_{i,j;k,l}(t) \Bigg ) \text{log } \gamma_{i,j;k,l}(t) &\qquad \boldsymbol{\Gamma} & \gamma_{i,j;k,l} = \frac{\sum_{t=2}^T \hat{v}_{i,j;k,l}(t)}{\sum_{k'=1}^m \sum_{l'=1}^n \sum_{t=2}^T \hat{v}_{i,j;k',l'}(t)} \\
+    \sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } p_{i,j}(x_t)  & \qquad \lambda_{b;i}        &\hat{\lambda}_{b;i} = \frac{\sum_{j=1}^n \sum_{t=1}^T \hat{u}_j(t) b_t}{\sum_{t=1}^T \hat{u}_j(t)} \\
+                                                                                & \qquad \lambda_{s;j}        &\hat{\lambda}_{s;j} = \frac{\sum_{i=1}^m \sum_{t=1}^T \hat{u}_i(t) s_t}{\sum_{t=1}^T \hat{u}_i(t)}
+  \end{aligned}
+\end{align}
+
+
 
 #Estimation of Trading Motives via K-Means Clustering
