@@ -46,7 +46,7 @@ d2 = rpois(sum(unifvec >= cdf[1]),lambdas[2])
 x = c(d1,d2) 
 ```
 
-This code generates a series of x values according to a mixture of two poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
+This code generates a series of x values according to a mixture of two Poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
 
 We can see from both the following plots of the time series and the histograms the data appears to conform to two separate distributions, or states, as it were:  
 
@@ -234,9 +234,9 @@ $$\mathbf{P}(1) = \begin{pmatrix}
 This can be implemented easily in R as:
 
 ```{r}
-PMat <- function(x) diag(dpois(x = x, lambda = lambdas))
+PMat <- function(x, lambda) diag(dpois(x, lambda))
 
-PMat(1)
+PMat(1, lambdas)
 ```
 
 Next we introduce the transition probability matrix $\boldsymbol{\Gamma}(t)$ which is the $m \times m$ matrix of transition probabilities at state $t$:
@@ -307,7 +307,7 @@ With which we can now calculate the marginal distribution $\eqref{eq:marginalSta
 
 ```{r}
 x = 1
-sum(delta %*% PMat(x))
+sum(delta %*% PMat(x, lambdas))
 ```
 
 # Calculating the Likelihood
@@ -371,9 +371,9 @@ pois.hmm.alpha <- function(x, gamma, delta = NULL)
     {
       prevAlpha = alpha[[t-1]]
     }
-    alpha[[t]] = prevAlpha %*% gamma %*% PMat(x[t])
+    alpha[[t]] = prevAlpha %*% gamma %*% PMat(x[t],lambdas)
   }
-  return(alpha[[length(x)]])
+  return(alpha[[n]])#return the last itertion
 }
 ```
 
@@ -540,7 +540,7 @@ With these steps in place we are now in a position to compute the conditional ex
 
 ###M Step
   
-After the E step is complete, the M Step is now to maximise the CDDL \eqref{eq:cddl} with respect to the three sets of parameters of interest, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$ and the parameters of the state-dependent distributions, namely $\lambda_1$,...,$\lambda_m$.^[We replace $p_j(x_t)$ in the CDDL with $e^{-\lambda_j} \lambda_j^x / x!$]
+After the E step is complete, we now follow the M Step by maximising the CDDL \eqref{eq:cddl} with respect to the three sets of parameters of interest, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$ and the parameters of the state-dependent distributions, namely $\lambda_1$,...,$\lambda_m$.^[We replace $p_j(x_t)$ in the CDDL with $e^{-\lambda_j} \lambda_j^x / x!$]
 
 \begin{align}
   \begin{aligned}\nonumber

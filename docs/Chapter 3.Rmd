@@ -7,7 +7,7 @@ Now that the mathematical foundations of the HMM have been laid down, we are rea
 The probability of observing $b_t$ buy orders and $s_t$ sell orders is driven by the fact that they arrive according to independent Poisson process, and as such, conditional on the state at a particular volume bucket $t$ is $(i, j)$ we can state:
 
 \begin{align}
- \begin{aligned}\nonumber
+ \begin{aligned}\label{eq:bivarPois}
  p_{i,j}(X) &= Pr(X_t = x | C_{b;t} = i, C_{s;t} = j) \\
             &= p_i(b_t) p_j(s_t) \\ 
             &= e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} \times e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !} \\ 
@@ -78,5 +78,58 @@ The likelihood $L_T$ for the bivariate independent Poisson HMM is then formulate
 $$L_T = \boldsymbol{\delta} \mathbf{P}(x_1) \boldsymbol{\Gamma} \mathbf{P}(x_2) \dots   \boldsymbol{\Gamma} \mathbf{P}(x_T) \mathbf{1'}$$
 
 #Estimation via EM
+
+By examining the original CDDL equation we introduced in \eqref{eq:cddl}, we can start to extend this for the bivariate Poisson case in order to estimate VPIN:
+
+\begin{align}
+  \begin{aligned}\nonumber
+    \text{log} \Big ( Pr(\mathbf{x}^{(T)}, \mathbf{c}^{(T)}) \Big ) &  
+    = \sum_{j=1}^m u_j(1) \text{log } \delta_j
+    + \sum_{j=1}^m \sum_{k=1}^m \Bigg ( \sum_{t=2}^T v_{jk}(t)   \Bigg ) \text{log } \gamma_{jk} 
+    + \sum_{j=1}^m \sum_{t=1}^T u_j(t) \text{log } p_j(x_t)
+  \end{aligned}
+\end{align}
+
+First we extend the original indicator variables^[Confusingly, @zucchini re-use the notation $u_j$ which has already been used to denote the unconditional state distribution]:
+
+\begin{align}
+  \begin{aligned}\nonumber
+    u_{i,j}(t) & = 1 \iff C_{b;t} = i \text{ and } C_{s;t} = j\\
+    v_{i,j;k,l}(t) & = 1 \iff C_{b;t-1} = i \text{ , }  C_{s;t-1} = i \text{ , }  C_{b;t} = k \text{ , } \text{ and }  C_{s;t} = l
+  \end{aligned}
+\end{align}
+
+To give us the following CDDL:
+
+\begin{align}
+  \begin{aligned}\label{eq:cddlVPIN}
+    \text{log} \Big ( Pr(\mathbf{x}^{(T)}, \mathbf{c}^{(T)}) \Big ) &  
+    = \sum_{i=1}^m \sum_{j=1}^n u_{i,j}(1) \text{log } \delta_{i,j}
+    + \sum_{i,k=1}^m \sum_{j,l=1}^n \Bigg ( \sum_{t=2}^T v_{i,j;k,l}(t)   \Bigg ) \text{log } \gamma_{i,j;k,l}(t) 
+    + \sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } p_{i,j}(x_t)
+  \end{aligned}
+\end{align}
+
+## E Step
+
+Again, following the univariate examples \eqref{eq:uHat} and \eqref{eq:vHat} we find that the conditional expectations of the missing data given the observations are as follows:
+
+\begin{align}
+  \begin{aligned}\nonumber
+    \hat{u}_{i,j}(t)  & = Pr(C_{b;t}=i,C_{s;t}=j| \mathbf{x}^{(T)}) \\
+                      & = \alpha_t(i,j) \beta_{t}(i,j) / L_T
+  \end{aligned}
+\end{align}
+
+\begin{align}
+  \begin{aligned}\nonumber
+    \hat{v}_{i,j;k,l}(t) & = Pr(C_{b;t-1}=i, C_{s;t-1}=j, C_{b;t}=k, C_{s;t}=l | \mathbf{x}^{(T)}) \\
+                         & = \alpha_{t-1}(i,j) \gamma_{i,j;k,l} p_{k,l}(x_t) \beta_{t}(k,l) / L_T 
+  \end{aligned}
+\end{align}
+
+## M Step
+
+On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPIN} with respect to the four sets of parameters, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$, $\lambda_{b;i}$ and $\lambda_{s;j}$. The state dependent distribution as stated here \eqref{eq:bivarPois} is the independent bivariate Poisson distribution:  $e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} \times e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$
 
 #Estimation of Trading Motives via K-Means Clustering

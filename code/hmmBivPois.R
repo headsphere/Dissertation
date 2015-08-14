@@ -146,7 +146,7 @@ pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,
   delta.next       <- delta
   for (iter in 1:maxiter)                                    
   {                                                        
-    lallprobs    <- outer(x,lambda_buy,dpois,log=TRUE)           
+    #lallprobs    <- outer(x,lambda_buy,dpois,log=TRUE)           
     fb  <-  pois.HMM.lalphabeta.uni(x,m,lambda_buy,gamma)#,lambda_sell, delta=delta)   
     la  <-  fb$la                                            
     lb  <-  fb$lb                                            
@@ -157,7 +157,15 @@ pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,
     {                                                       
       for (k in 1:m)                                         
       {                                                      
-        orig <- gamma[j,k] * sum( exp(la[j,1:(n-1)] + lallprobs[2:n,k] + lb[k,2:n] - llk) )
+        orig <- gamma[j,k] * 
+          sum( 
+            exp(
+                la[j,1:(n-1)] + 
+                lallprobs[2:n,k] + 
+                lb[k,2:n] - 
+                llk
+              ) 
+            )
         new <- gamma[j,k] * sum( exp(la[j,1:(n-1)] + PMat.uni(x, lambda_buy) + lb[k,2:n] - llk) )
         gamma.next[j,k] <- orig
       }                                                      
@@ -185,24 +193,21 @@ pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,
   print(paste("No convergence after",maxiter,"iterations"))  
   NA                                                         
 }                                                           
-dpois.bi <- function(x, y, lambda){
-  browser()
-  dpois(x, lambda) * dpois(y, lambda)
-  }
 
-lambda_buy = c(3, 15)
+lambda_buy = c(3, 15, 60)
 lambda_sell = c(10, 40)
 delta_buy = c(0.3, 0.6, 0.1)
 delta_sell = c(0.1, 0.9)
 
-m = length(lambda_buy)
-n = length(lambda_sell)
+m_buy = length(lambda_buy)
+m_sell = length(lambda_sell)
 
-mn <- m*n
+mn <- m_buy * m_sell
 gamma = matrix(data = rep(1/mn, mn*mn), nrow = mn, ncol = mn)
 
 # Generate synthetic data
-x = pois.HMM.generate_sample(10, mn, lambda_buy, lambda_sell, gamma)
+n <- 10
+x = pois.HMM.generate_sample(n, mn, lambda_buy, lambda_sell, gamma)
 # Fit normal-HMM with the EM algorith,
 #res <- norm.HMM.EM(x,m,mu,sigma,gamma,delta)
 res <- pois.HMM.lalphabeta(x,mn,lambda_buy,lambda_sell,gamma,delta)

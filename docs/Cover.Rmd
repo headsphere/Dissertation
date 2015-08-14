@@ -36,6 +36,15 @@ options(digits = 3)
 ```{r child = 'Chapter 3.Rmd'}
 ```
 \newpage
+```{r child = 'Chapter 4.Rmd'}
+```
+\newpage
+```{r child = 'Chapter 5.Rmd'}
+```
+\newpage
+```{r child = 'Chapter 6.Rmd'}
+```
+\newpage
 ```{r child = 'Appendix 1.Rmd'}
 ```
 \newpage

@@ -64,6 +64,7 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
    lb  <-  fb$lb                                            
    c   <-  max(la[,n])                                      
    llk <- c+log(sum(exp(la[,n]-c)))                         
+   browser()
    for (j in 1:m)                                           
    {                                                       
      for (k in 1:m)                                         
@@ -95,6 +96,19 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
  print(paste("No convergence after",maxiter,"iterations"))  
  NA                                                         
 }                                                           
+
+statdist <- function(gamma){
+  m = dim(gamma)[1]
+  matrix(1,1,m) %*% solve(diag(1,m) - gamma + matrix(1,m,m))
+}
+
+gamma <- matrix(c(0.9,0.1,0.3,0.7), nrow = 2, ncol = 2, byrow = TRUE)
+lambda <- c(2,10)
+m <- 2
+n <- 100
+x = pois.HMM.generate_sample(n,m,lambda, gamma)
+delta = statdist(gamma)
+pois.HMM.EM(x,m,lambda,gamma,delta)
 
 
 pois.HMM.viterbi<-function(x,m,lambda,gamma,delta=NULL,...) 
