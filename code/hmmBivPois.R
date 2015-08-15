@@ -135,13 +135,29 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     }                                                       
     #browser()
     for (i in 1:m_buy)               
-    {                                                       
-      lambda_buy.next[i] <- sum(exp(la[i,]+lb[i,]-llk)*buy) / sum(exp(la[i,]+lb[i,]-llk))            
+    {
+      numerator <- 0
+      denominator <- 0
+      for (j in 1:m_sell)
+      {
+        numerator <- numerator + sum(exp(la[j,]+lb[j,]-llk)*buy)
+        denominator <- denominator + sum(exp(la[j,]+lb[j,]-llk))
+      }
+      
+      lambda_buy.next[i] <- numerator / denominator            
     }
 
     for (j in 1:m_sell)                                         
     {
-      lambda_sell.next[j] <- sum(exp(la[j,]+lb[j,]-llk)*sell) / sum(exp(la[j,]+lb[j,]-llk))            
+      numerator <- 0
+      denominator <- 0
+      for (i in 1:m_buy)               
+      {
+        numerator <- numerator + sum(exp(la[i,]+lb[i,]-llk)*sell)
+        denominator <- denominator + sum(exp(la[i,]+lb[i,]-llk))
+      }
+      
+      lambda_sell.next[j] <- numerator / denominator
     }
 
     gamma.next <- gamma.next/apply(gamma.next,1,sum)         
