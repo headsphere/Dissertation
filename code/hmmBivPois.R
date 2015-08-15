@@ -1,16 +1,3 @@
-norm.HMM.generate_sample <- function(n,m,mu,sigma,gamma,delta=NULL)
-{
-  browser()
-  if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))
-  mvect <- 1:m
-  state <- numeric(n)
-  state[1] <- sample(mvect,1,prob=delta)
-  for (i in 2:n)
-    state[i]<-sample(mvect,1,prob=gamma[state[i-1],])
-  x <- rnorm(n,mu[state],sigma[state])
-  x
-}
-
 statdist <- function(gamma){
   m = dim(gamma)[1]
   matrix(1,1,m) %*% solve(diag(1,m) - gamma + matrix(1,m,m))
@@ -45,6 +32,25 @@ PMat <- function(t, lambda_buy, lambda_sell) {
     for(j in 1:n)
     {
       pmat[counter,counter]  = dpois(buy_t, lambda_buy[i]) * dpois(sell_t, lambda_sell[j])
+      counter = counter + 1
+    }
+  }
+  pmat
+}
+
+PMatAll <- function(x, lambda_buy, lambda_sell) {
+  buy <- x[,1]
+  sell <- x[,2]
+  m_buy = length(lambda_buy)
+  m_sell = length(lambda_sell)
+  n = dim(x)[1]
+  pmat = matrix(data=0, nrow = n, ncol = m_buy*m_sell)
+  counter = 1
+  for(i in 1:m_buy)
+  {
+    for(j in 1:m_sell)
+    {
+      pmat[,counter]  = dpois(buy, lambda_buy[i]) * dpois(sell, lambda_sell[j])
       counter = counter + 1
     }
   }
@@ -101,53 +107,18 @@ pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
   list(la=lalpha,lb=lbeta)                                   
 }
 
-pois.HMM.lalphabeta.uni<-function(x,m,lambda,gamma,delta=NULL)  
-{                                                           
-  if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))   
-  n          <- length(x)                                    
-  lalpha     <- lbeta<-matrix(NA,m,n)                       
-  allprobs   <- outer(x,lambda,dpois)                        
-  foo        <- delta*allprobs[1,]                           
-  sumfoo     <- sum(foo)                                    
-  lscale     <- log(sumfoo)                                 
-  foo        <- foo/sumfoo                                   
-  lalpha[,1] <- log(foo)+lscale                              
-  for (i in 2:n)                                             
-  {                                                        
-    foo        <- foo%*%gamma*allprobs[i,]                   
-    sumfoo     <- sum(foo)                                   
-    lscale     <- lscale+log(sumfoo)                         
-    foo        <- foo/sumfoo                                 
-    lalpha[,i] <- log(foo)+lscale                            
-  }                                                        
-  lbeta[,n]  <- rep(0,m)                                     
-  foo        <- rep(1/m,m)                                   
-  lscale     <- log(m)                                       
-  for (i in (n-1):1)                                         
-  {                                                        
-    foo        <- gamma%*%(allprobs[i+1,]*foo)               
-    lbeta[,i]  <- log(foo)+lscale                            
-    sumfoo     <- sum(foo)                                   
-    foo        <- foo/sumfoo                                 
-    lscale     <- lscale+log(sumfoo)                         
-  }                                                        
-  list(la=lalpha,lb=lbeta)                                   
-}  
-
-PMat.uni <- function(x, lambda) diag(dpois(x, lambda))
-
 pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,            
                         maxiter=1000,tol=1e-6,...)         
 {
-  n                <- length(x)#dim(x)[1]
+  n                <- dim(x)[1]
   lambda_buy.next  <- lambda_buy
   lambda_sell.next <- lambda_sell
   gamma.next       <- gamma
   delta.next       <- delta
   for (iter in 1:maxiter)                                    
   {                                                        
-    #lallprobs    <- outer(x,lambda_buy,dpois,log=TRUE)           
-    fb  <-  pois.HMM.lalphabeta.uni(x,m,lambda_buy,gamma)#,lambda_sell, delta=delta)   
+    lallprobs    <- log(PMatAll(x, lambda_buy, lambda_sell))
+    fb  <-  pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta)   
     la  <-  fb$la                                            
     lb  <-  fb$lb                                            
     c   <-  max(la[,n])                                      
@@ -157,17 +128,7 @@ pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,
     {                                                       
       for (k in 1:m)                                         
       {                                                      
-        orig <- gamma[j,k] * 
-          sum( 
-            exp(
-                la[j,1:(n-1)] + 
-                lallprobs[2:n,k] + 
-                lb[k,2:n] - 
-                llk
-              ) 
-            )
-        new <- gamma[j,k] * sum( exp(la[j,1:(n-1)] + PMat.uni(x, lambda_buy) + lb[k,2:n] - llk) )
-        gamma.next[j,k] <- orig
+        gamma.next[j,k] <- gamma[j,k] * sum(exp(la[j,1:(n-1)] + lallprobs[2:n,k] + lb[k,2:n] - llk))
       }                                                      
       lambda.next[j] <- sum(exp(la[j,]+lb[j,]-llk)*x)/         
         sum(exp(la[j,]+lb[j,]-llk))            
@@ -212,8 +173,6 @@ x = pois.HMM.generate_sample(n, mn, lambda_buy, lambda_sell, gamma)
 #res <- norm.HMM.EM(x,m,mu,sigma,gamma,delta)
 res <- pois.HMM.lalphabeta(x,mn,lambda_buy,lambda_sell,gamma,delta)
 
-#test EM with unvariate sample first
-gamma.uni = matrix(data = rep(1/m, m*m), nrow = m, ncol = m)
-pois.HMM.EM(x[,1],m,lambda_buy,lambda_sell,gamma.uni,delta_buy)
+pois.HMM.EM(x,mn,lambda_buy,lambda_sell,gamma,delta_buy)
 
 
