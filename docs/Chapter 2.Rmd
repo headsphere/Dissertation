@@ -546,8 +546,7 @@ After the E step is complete, we now follow the M Step by maximising the CDDL \e
   \begin{aligned}\nonumber
     \text{Term to maximise} & \qquad \text{Parameter} & \text{Solution} \\
     \sum_{j=1}^m \hat{u}_j(1) \text{log } \delta_j & \qquad \boldsymbol{\delta} & \delta_j = \frac{\hat{u}_j(1)}{\sum_{j=1}^m \hat{u}_j(1)} = \hat{u}_j(1)\\
-    \sum_{j=1}^m \sum_{k=1}^m \Bigg ( \sum_{t=2}^T \hat{v}_{jk}(t)   \Bigg ) \text{log } \gamma_{jk} & \qquad \boldsymbol{\Gamma} & \gamma_{jk} = \frac{f_{jk}}{\sum_{k=1}^m f_{jk}} \\
-    & & \text{ with } f_{jk} = \sum_{t=2}^T \hat{v}_{jk}(t)\\
+    \sum_{j=1}^m \sum_{k=1}^m \Bigg ( \sum_{t=2}^T \hat{v}_{jk}(t)   \Bigg ) \text{log } \gamma_{jk} & \qquad \boldsymbol{\Gamma} & \gamma_{jk} = \frac{\sum_{t=2}^T \hat{v}_{jk}(t)}{\sum_{k=1}^m \sum_{t=2}^T \hat{v}_{jk}(t)} \\
     \sum_{j=1}^m \sum_{t=1}^T \hat{u}_j(t) \text{log } e^{-\lambda_j} \lambda_j^x / x!  & \qquad \lambda_1,\dots,\lambda_m & 0 = \sum_{t=1}^T \hat{u}_j(t) (-1 + x_t / \lambda_j) \\
     & & \text{ that is, by } \hat{\lambda}_j = \frac{\sum_{t=1}^T \hat{u}_j(t) x_t}{\sum_{t=1}^T \hat{u}_j(t)}
   \end{aligned}

@@ -111,6 +111,8 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
                         maxiter=1000,tol=1e-6,...)         
 {
   t                <- dim(x)[1]   # num of observations
+  buy <- x[,1]
+  sell <- x[,2]
   lambda_buy.next  <- lambda_buy
   lambda_sell.next <- lambda_sell
   gamma.next       <- gamma
@@ -123,15 +125,16 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     lb  <-  fb$lb                                            
     c   <-  max(la[,t])                                      
     llk <- c+log(sum(exp(la[,t]-c)))
+    #browser()
     for (i in 1:m_buy)               
     {                                                       
       for (j in 1:m_sell)                                         
       {                                                      
         gamma.next[i,j] <- gamma[i,j] * sum(exp(la[i,1:(t-1)] + lallprobs[2:t,j] + lb[j,2:j] - llk))
 
-        lambda_buy.next[i] <- sum(exp(la[i,]+lb[i,]-llk)*x) / sum(exp(la[i,]+lb[i,]-llk))            
+        lambda_buy.next[i] <- sum(exp(la[i,]+lb[i,]-llk)*buy) / sum(exp(la[i,]+lb[i,]-llk))            
         
-        lambda_sell.next[j] <- sum(exp(la[j,]+lb[j,]-llk)*x) / sum(exp(la[j,]+lb[j,]-llk))            
+        lambda_sell.next[j] <- sum(exp(la[j,]+lb[j,]-llk)*sell) / sum(exp(la[j,]+lb[j,]-llk))            
       }                                                      
     }                                                       
     #browser()
