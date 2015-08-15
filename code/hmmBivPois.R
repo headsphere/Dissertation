@@ -3,7 +3,7 @@ statdist <- function(gamma){
   matrix(1,1,m) %*% solve(diag(1,m) - gamma + matrix(1,m,m))
 }
 
-pois.HMM.generate_sample <- function(n,m,lambda_buy,lambda_sell,gamma,delta=NULL)
+bi.pois.HMM.generate_sample <- function(n,m,lambda_buy,lambda_sell,gamma,delta=NULL)
 {
   x = matrix(nrow = n, ncol = 2)
   if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))
@@ -64,7 +64,7 @@ PMatAll <- function(x, lambda_buy, lambda_sell) {
 #
 #  ... generic function: the only line changed from the pois.HMM.lalphabeta routine is:  allprobs   <- outer(x,lambda,dpois)
 ##
-pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)  
+bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)  
 {                                                           
   #browser()
   #if(is.null(delta)){
@@ -107,10 +107,10 @@ pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
   list(la=lalpha,lb=lbeta)                                   
 }
 
-pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,            
+bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,            
                         maxiter=1000,tol=1e-6,...)         
 {
-  n                <- dim(x)[1]
+  t                <- dim(x)[1]   # num of observations
   lambda_buy.next  <- lambda_buy
   lambda_sell.next <- lambda_sell
   gamma.next       <- gamma
@@ -118,38 +118,45 @@ pois.HMM.EM <- function(x,m,lambda_buy,lambda_sell,gamma,delta,
   for (iter in 1:maxiter)                                    
   {                                                        
     lallprobs    <- log(PMatAll(x, lambda_buy, lambda_sell))
-    fb  <-  pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta)   
+    fb  <-  bi.pois.HMM.lalphabeta(x,m_buy * m_sell,lambda_buy,lambda_sell,gamma,delta)   
     la  <-  fb$la                                            
     lb  <-  fb$lb                                            
-    c   <-  max(la[,n])                                      
-    llk <- c+log(sum(exp(la[,n]-c)))
-    browser()
-    for (j in 1:m)                                           
+    c   <-  max(la[,t])                                      
+    llk <- c+log(sum(exp(la[,t]-c)))
+    for (i in 1:m_buy)               
     {                                                       
-      for (k in 1:m)                                         
+      for (j in 1:m_sell)                                         
       {                                                      
-        gamma.next[j,k] <- gamma[j,k] * sum(exp(la[j,1:(n-1)] + lallprobs[2:n,k] + lb[k,2:n] - llk))
+        gamma.next[i,j] <- gamma[i,j] * sum(exp(la[i,1:(t-1)] + lallprobs[2:t,j] + lb[j,2:j] - llk))
+
+        lambda_buy.next[i] <- sum(exp(la[i,]+lb[i,]-llk)*x) / sum(exp(la[i,]+lb[i,]-llk))            
+        
+        lambda_sell.next[j] <- sum(exp(la[j,]+lb[j,]-llk)*x) / sum(exp(la[j,]+lb[j,]-llk))            
       }                                                      
-      lambda.next[j] <- sum(exp(la[j,]+lb[j,]-llk)*x)/         
-        sum(exp(la[j,]+lb[j,]-llk))            
     }                                                       
+    #browser()
     gamma.next <- gamma.next/apply(gamma.next,1,sum)         
-    delta.next <- exp(la[,1]+lb[,1]-llk)                     
+    delta.next <- exp(la[,1]+lb[,1]-llk)              # (alpha * beta)/L_T
     delta.next <- delta.next/sum(delta.next)                 
-    crit       <- sum(abs(lambda-lambda.next)) +             
-      sum(abs(gamma-gamma.next)) +               
-      sum(abs(delta-delta.next))                 
+    crit       <- sum(abs(lambda_buy-lambda_buy.next)) +             
+                  sum(abs(lambda_sell-lambda_sell.next)) +
+                  sum(abs(gamma-gamma.next)) +               
+                  sum(abs(delta-delta.next))                 
+    
+    print(paste("Iteration:",iter," Crit:", crit, "LLK:", llk))  
     if(crit<tol)                                             
     {                                                      
+      m = m_buy * m_sell
       np     <- m*m+m-1                                      
       AIC    <- -2*(llk-np)                                  
-      BIC    <- -2*llk+np*log(n)                             
-      return(list(lambda=lambda,gamma=gamma,delta=delta,    
+      BIC    <- -2*llk+np*log(t)                             
+      return(list(lambda_buy=lambda_buy,lambda_sell=lambda_sell,gamma=gamma,delta=delta,    
                   mllk=-llk,AIC=AIC,BIC=BIC))                     
     }                                                      
-    lambda     <- lambda.next                               
-    gamma      <- gamma.next                                 
-    delta      <- delta.next                                
+    lambda_buy  <- lambda_buy.next                               
+    lambda_sell <- lambda_sell.next                               
+    gamma       <- gamma.next                                 
+    delta       <- delta.next                                
   }                                                        
   print(paste("No convergence after",maxiter,"iterations"))  
   NA                                                         
@@ -167,12 +174,12 @@ mn <- m_buy * m_sell
 gamma = matrix(data = rep(1/mn, mn*mn), nrow = mn, ncol = mn)
 
 # Generate synthetic data
-n <- 10
-x = pois.HMM.generate_sample(n, mn, lambda_buy, lambda_sell, gamma)
+n <- 2
+x = bi.pois.HMM.generate_sample(n, mn, lambda_buy, lambda_sell, gamma)
 # Fit normal-HMM with the EM algorith,
 #res <- norm.HMM.EM(x,m,mu,sigma,gamma,delta)
-res <- pois.HMM.lalphabeta(x,mn,lambda_buy,lambda_sell,gamma,delta)
+res <- bi.pois.HMM.lalphabeta(x,mn,lambda_buy,lambda_sell,gamma,delta)
 
-pois.HMM.EM(x,mn,lambda_buy,lambda_sell,gamma,delta_buy)
+bi.pois.HMM.EM(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta_buy)
 
 

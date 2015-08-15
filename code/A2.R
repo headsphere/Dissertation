@@ -64,7 +64,7 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
    lb  <-  fb$lb                                            
    c   <-  max(la[,n])                                      
    llk <- c+log(sum(exp(la[,n]-c)))                         
-   browser()
+#   browser()
    for (j in 1:m)                                           
    {                                                       
      for (k in 1:m)                                         
@@ -81,6 +81,9 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
    crit       <- sum(abs(lambda-lambda.next)) +             
                  sum(abs(gamma-gamma.next)) +               
                  sum(abs(delta-delta.next))                 
+   
+   print(paste("Iteration:",iter," Crit:", crit, "LLK:", llk))  
+   
    if(crit<tol)                                             
      {                                                      
      np     <- m*m+m-1                                      
@@ -102,13 +105,6 @@ statdist <- function(gamma){
   matrix(1,1,m) %*% solve(diag(1,m) - gamma + matrix(1,m,m))
 }
 
-gamma <- matrix(c(0.9,0.1,0.3,0.7), nrow = 2, ncol = 2, byrow = TRUE)
-lambda <- c(2,10)
-m <- 2
-n <- 100
-x = pois.HMM.generate_sample(n,m,lambda, gamma)
-delta = statdist(gamma)
-pois.HMM.EM(x,m,lambda,gamma,delta)
 
 
 pois.HMM.viterbi<-function(x,m,lambda,gamma,delta=NULL,...) 
@@ -262,4 +258,13 @@ pois.HMM.pseudo_residuals <-
  um       <- 0.5*(ul+uh)                                   
  npsr     <- qnorm(rbind(ul,um,uh))                         
  npsr                                                       
-}                                                           
+ }                                                           
+
+lambda <- c(2,10)
+m <- 2
+gamma <- matrix(c(0.9,0.1,0.3,0.7), nrow = 2, ncol = 2, byrow = TRUE)
+n <- 100
+set.seed(1)
+x = pois.HMM.generate_sample(n,m,lambda, gamma)
+delta = statdist(gamma)
+pois.HMM.EM(x,m,lambda,gamma,delta)
