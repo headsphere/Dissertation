@@ -64,7 +64,7 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
    lb  <-  fb$lb                                            
    c   <-  max(la[,n])                                      
    llk <- c+log(sum(exp(la[,n]-c)))                         
-#   browser()
+   browser()
    for (j in 1:m)                                           
    {                                                       
      for (k in 1:m)                                         
@@ -95,6 +95,7 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
    lambda     <- lambda.next                               
    gamma      <- gamma.next                                 
    delta      <- delta.next                                
+   print(gamma)
    }                                                        
  print(paste("No convergence after",maxiter,"iterations"))  
  NA                                                         
@@ -260,11 +261,14 @@ pois.HMM.pseudo_residuals <-
  npsr                                                       
  }                                                           
 
-lambda <- c(2,10)
-m <- 2
-gamma <- matrix(c(0.9,0.1,0.3,0.7), nrow = 2, ncol = 2, byrow = TRUE)
+lambda <- c(2,10,6,11,14,4)
+m <- length(lambda)
+#gamma <- matrix(c(0.9,0.1,0.3,0.7), nrow = m, ncol = m, byrow = TRUE)
+gamma <- matrix(rep(1,m*m), nrow = m, ncol = m, byrow = TRUE)
+gamma = gamma/apply(gamma,1,sum)         
 n <- 100
 set.seed(1)
 x = pois.HMM.generate_sample(n,m,lambda, gamma)
 delta = statdist(gamma)
 pois.HMM.EM(x,m,lambda,gamma,delta)
+
