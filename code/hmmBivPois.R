@@ -64,12 +64,14 @@ PMatAll <- function(x, lambda_buy, lambda_sell) {
 #
 #  ... generic function: the only line changed from the pois.HMM.lalphabeta routine is:  allprobs   <- outer(x,lambda,dpois)
 ##
+
+# ---- bi.pois.HMM.lalphabeta ----
 bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)  
 {                                                           
   #browser()
-  #if(is.null(delta)){
+  if(is.null(delta)){
     delta = solve(t(diag(m)-gamma+1),rep(1,m))   
-  #}
+  }
   n          <- dim(x)[1]
   lalpha     <- lbeta <- matrix(NA,m,n)                       
   # allprobs <- outer(x,lambda,dpois)                     # <- OLD
@@ -107,9 +109,11 @@ bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
   list(la=lalpha,lb=lbeta)                                   
 }
 
+# ---- bi.pois.HMM.EM ----
 bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,            
                         maxiter=1000,tol=1e-6,...)         
 {
+  #browser()
   t                <- dim(x)[1]   # num of observations
   m                <- m_buy * m_sell
   buy              <- x[,1]
@@ -118,6 +122,7 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
   lambda_sell.next <- lambda_sell
   gamma.next       <- gamma
   delta.next       <- delta
+  #browser()
   for (iter in 1:maxiter)                                    
   {                                                        
     lallprobs    <- log(PMatAll(x, lambda_buy, lambda_sell))
@@ -126,46 +131,68 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     lb  <-  fb$lb                                            
     c   <-  max(la[,t])                                      
     llk <- c+log(sum(exp(la[,t]-c)))
-    for (i in 1:m)               
-    {                                                       
-      for (j in 1:m)                                         
-      {                                                      
-        gamma.next[i,j] <- gamma[i,j] * sum(exp(la[i,1:(t-1)] + lallprobs[2:t,j] + lb[j,2:t] - llk))
-      }                                                      
-    }                                                       
-    #browser()
+    
+    #calculate gamma
+    for (ij in 1:m)     
+    {
+      #because gamma is mn * mn, ij represents (i,j) the combination of buy and sell states  
+      for (kl in 1:m)  
+      {
+        #similarly kl here represents (k,l) 
+        gamma.next[ij,kl] <- gamma[ij,kl] * sum(exp(la[ij,1:(t-1)] + lallprobs[2:t,kl] + lb[kl,2:t] - llk))
+      }
+    }
+    gamma.next <- gamma.next/apply(gamma.next,1,sum)#"stochastisize"
+    print(gamma)
+    
+    #initiliase a state index lookup table for resolving (i,j) -> stateIndex
+    stateEnv<-new.env() 
+    counter = 1
+    for (i in 1:m_buy)               
+    {
+      for (j in 1:m_sell)
+      {
+        stateEnv[[paste(i,j)]] = counter
+        counter = counter + 1
+      }
+    }
+    
+    #calculate lambda_buy_i
     for (i in 1:m_buy)               
     {
       numerator <- 0
       denominator <- 0
       for (j in 1:m_sell)
       {
-        numerator <- numerator + sum(exp(la[j,]+lb[j,]-llk)*buy)
-        denominator <- denominator + sum(exp(la[j,]+lb[j,]-llk))
+        stateIdx = stateEnv[[paste(i,j)]]
+        numerator <- numerator + sum(exp(la[stateIdx,]+lb[stateIdx,]-llk)*buy)
+        denominator <- denominator + sum(exp(la[stateIdx,]+lb[stateIdx,]-llk))
       }
       
       lambda_buy.next[i] <- numerator / denominator            
     }
-
+    print(lambda_buy)
+    
+    #calculate lambda_sell_j
     for (j in 1:m_sell)                                         
     {
       numerator <- 0
       denominator <- 0
       for (i in 1:m_buy)               
       {
-        numerator <- numerator + sum(exp(la[i,]+lb[i,]-llk)*sell)
-        denominator <- denominator + sum(exp(la[i,]+lb[i,]-llk))
+        stateIdx = stateEnv[[paste(i,j)]]
+        numerator <- numerator + sum(exp(la[stateIdx,]+lb[stateIdx,]-llk)*sell)
+        denominator <- denominator + sum(exp(la[stateIdx,]+lb[stateIdx,]-llk))
       }
       
       lambda_sell.next[j] <- numerator / denominator
     }
-
-    gamma.next <- gamma.next/apply(gamma.next,1,sum)         
-    print(gamma.next)
-    print(lambda_buy)
     print(lambda_sell)
-    delta.next <- exp(la[,1]+lb[,1]-llk)              # (alpha * beta)/L_T
+    
+    #calculate delta
+    delta.next <- exp(la[,1]+lb[,1]-llk)
     delta.next <- delta.next/sum(delta.next)                 
+    
     crit       <- sum(abs(lambda_buy-lambda_buy.next)) +             
                   sum(abs(lambda_sell-lambda_sell.next)) +
                   sum(abs(gamma-gamma.next)) +               
@@ -174,7 +201,6 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     print(paste("Iteration:",iter," Crit:", crit, "LLK:", llk))  
     if(crit<tol)                                             
     {                                                      
-      m = m_buy * m_sell
       np     <- m*m+m-1                                      
       AIC    <- -2*(llk-np)                                  
       BIC    <- -2*llk+np*log(t)                             
@@ -188,23 +214,28 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
   }                                                        
   print(paste("No convergence after",maxiter,"iterations"))  
   NA                                                         
-}                                                           
+}          
+
+# ---- test ----
 
 lambda_buy = c(1,20,30)
-lambda_sell = c(10,10)
-delta_buy = c(0.3, 0.3, 0.4)
+lambda_sell = c(10,20)
+delta_buy = c(0.3, 0.3, 0.1, 0.1, 0.1, 0.1)
 delta_sell = c(0.5, 0.5)
 
 m_buy = length(lambda_buy)
 m_sell = length(lambda_sell)
 
 mn <- m_buy * m_sell
-gamma = matrix(data = rep(1/mn, mn*mn), nrow = mn, ncol = mn)
+
+# gamma <- matrix(runif(mn), nrow = mn, ncol = mn, byrow = TRUE)
+gamma <- matrix(rep(1,mn), nrow = mn, ncol = mn, byrow = TRUE)
+gamma = gamma/apply(gamma,1,sum)#create stochastic transition matrix
 
 # Generate synthetic data
 set.seed(1)
-n <- 1000
+n <- 10
 x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
-bi.pois.HMM.EM(x,m_buy,m_sell,c(10,20,30), c(7,12),gamma,delta_buy)
+bi.pois.HMM.EM(x,m_buy,m_sell,c(10,11,12), c(13,14),gamma,delta_buy)
 
 
