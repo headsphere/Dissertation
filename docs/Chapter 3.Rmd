@@ -135,13 +135,15 @@ On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPI
 \begin{align}
   \begin{aligned}\nonumber
     \text{Term to maximise} & \qquad \text{Parameter} & \text{Solution} \\
-    \sum_{i=1}^m \sum_{j=1}^n u_{i,j}(1) \text{log } \delta_{i,j}                                             &\qquad \boldsymbol{\delta} & \delta_{i,j} = \frac{\hat{u}_{i,j}(1)}{ \sum_{i=1}^m \sum_{j=1}^n \hat{u}_{i,j}(1)} = \hat{u}_{i,j}(1)\\
+    \sum_{i=1}^m \sum_{j=1}^n u_{i,j}(1) \text{log } \delta_{i,j}                                             &\qquad \boldsymbol{\delta} & \delta_{i,j} = \frac{\hat{u}_{i,j}(1)}{ \sum_{i=1}^m \sum_{j=1}^n \hat{u}_{i,j}(1)}\\
     \sum_{i,k=1}^m \sum_{j,l=1}^n \Bigg ( \sum_{t=2}^T v_{i,j;k,l}(t) \Bigg ) \text{log } \gamma_{i,j;k,l}(t) &\qquad \boldsymbol{\Gamma} & \gamma_{i,j;k,l} = \frac{\sum_{t=2}^T \hat{v}_{i,j;k,l}(t)}{\sum_{k'=1}^m \sum_{l'=1}^n \sum_{t=2}^T \hat{v}_{i,j;k',l'}(t)} \\
     \sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } p_{i,j}(x_t)  & \qquad \lambda_{b;i}        &\hat{\lambda}_{b;i} = \frac{\sum_{j=1}^n \sum_{t=1}^T \hat{u}_{i,j}(t) b_t}{\sum_{j=1}^n \sum_{t=1}^T \hat{u}_{i,j}(t)} \\
                                                                                 & \qquad \lambda_{s;j}        &\hat{\lambda}_{s;j} = \frac{\sum_{i=1}^m \sum_{t=1}^T \hat{u}_{i,j}(t) s_t}{\sum_{i=1}^m \sum_{t=1}^T \hat{u}_{i,j}(t)}
   \end{aligned}
 \end{align}
 
+We repeat the above iterative scheme a large number of times until we meet our convergence criteria. In this instance we repeat until the marginal improvement in the CDDL is less than $10^{-6}.$\marginnote{The R code for this algorithm can be found in appendix TODO}
 
+The problem remains that without suitable starting values for the initial distribution $\boldsymbol{\delta}$, and the transition matrix $\boldsymbol{\Gamma}$, the EM algorithm maay converge on local not global optima. Therefore a strategy for mitigating this problem is required.
 
 #Estimation of Trading Motives via K-Means Clustering

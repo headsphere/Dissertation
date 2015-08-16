@@ -1,3 +1,5 @@
+# ---- vpin.sim ----
+
 finv <- function(u,p)
 {
 #  return (qnorm(u, mean = p))
