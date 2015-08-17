@@ -92,3 +92,5 @@ kmeans.rndstart <-
     fits
   }
 
+# testdata <- matrix(c(rnorm(2000),3+rnorm(2000)),byrow=T,ncol=4)
+# temp <- jump(testdata,y=c(1.5,2,2.5),rand=10,trace=F)
