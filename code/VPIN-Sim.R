@@ -7,7 +7,7 @@ finv <- function(u,p)
   return (rpois(1, p))
 }
 
-numSim = 1000
+numSim = 10000
 Vpin = numeric(numSim)
 
 V = 50 #size of each volume bucket
@@ -72,6 +72,11 @@ source('jump.R')
 
 testdata <- matrix(c(Vbuy, Vsell),byrow=T,ncol=2)
 temp <- jump(testdata,y=c(1.5,2,2.5),rand=10,trace=F,plotjumps =FALSE)
+
+colnames(testdata) <- c("buy", "sell")
+(cl <- kmeans(testdata, 9))
+plot(testdata, col = cl$cluster)
+points(cl$centers, col = 1:2, pch = 8, cex = 2)
 
 source('hmmBivPois.R')
 lambda_buy = c(10,55)
