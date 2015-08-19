@@ -68,6 +68,8 @@ while(s < numSim){
 meanVpin = sum(Vpin)/numSim
 varVpin =  sum(Vpin^2)/(numSim - 1) - (sum(Vpin)/(numSim * (numSim - 1)))^2
 
+# ---- vpin.sim.test ----
+
 source('jump.R')
 
 testdata <- matrix(c(Vbuy, Vsell),byrow=T,ncol=2)
@@ -85,8 +87,12 @@ delta_buy = matrix(rep(1, mn), ncol = mn)
 delta_buy = delta_buy/apply(delta_buy, 1, sum)
 
 gamma <- matrix(rep(1,mn), nrow = mn, ncol = mn, byrow = TRUE)
-gamma = gamma/apply(gamma,1,sum)#create stochastic transition matrix
+gamma = gamma/apply(gamma,1,sum)
 
-result <- bi.pois.HMM.EM(testdata,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta_buy)
-print(result)
+model <- bi.pois.HMM.EM(testdata,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta_buy)
+print(model)
+
+states = bi.pois.HMM.local_decoding(testdata, mn, model$lambda_buy, model$lambda_sell,gamma)
+stateProbs = bi.pois.HMM.state_probs(testdata, mn, model$lambda_buy, model$lambda_sell,gamma)
+
 
