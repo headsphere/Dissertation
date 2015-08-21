@@ -256,10 +256,10 @@ gamma <- matrix(rep(1,mn), nrow = mn, ncol = mn, byrow = TRUE)
 gamma = gamma/apply(gamma,1,sum)#create stochastic transition matrix
 
 # Generate synthetic data
-set.seed(1)
-n <- 10
-x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
-delta = c(0.3, 0.3, 0.1, 0.1, 0.1, 0.1)
-print(bi.pois.HMM.EM(x,m_buy,m_sell,c(10,11,12), c(13,14),gamma,delta))
+# set.seed(1)
+# n <- 10
+# x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
+# delta = c(0.3, 0.3, 0.1, 0.1, 0.1, 0.1)
+# print(bi.pois.HMM.EM(x,m_buy,m_sell,c(10,11,12), c(13,14),gamma,delta))
 
 
