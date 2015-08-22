@@ -510,7 +510,7 @@ We now state the following propositions:
 \end{equation}
 
 \begin{align}
-  \begin{aligned}\nonumber
+  \begin{aligned}\label{eq:alphaBeta}
   \alpha_t(i) \beta_{t}(i) & = Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}, C_t = i) \\
     \text{and consequently } \boldsymbol{\alpha_t} \boldsymbol{\beta_t}' & = Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}) = L_T
   \end{aligned}

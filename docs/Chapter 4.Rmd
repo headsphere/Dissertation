@@ -1,1 +1,107 @@
 \chapter{A Simulation Analysis}
+
+```{r}
+library(ggplot2)
+library(reshape2)
+```
+
+#Simulate data according to model
+
+We employ a Monte Carlo algorithm to simulate order flow based off the known parameters: $\alpha$ (the probability of information event), $\mu$ (the arrival rate of informed traders) and $\epsilon$ (the arrival rate of uninformed traders). Once we have the simulated order flow we can use the VPIN estimation procedure to give an estimation of the VPIN metric. 
+
+
+\begin{enumerate}
+  \item Set Monte Carlo Parameters:
+  \begin{enumerate}
+    \item Number of Simulations: $S$
+    \item VPIN: ($V$, $n$)
+    \item PIN: ($\alpha$, $\mu$)
+  \end{enumerate}
+  \item Set $\epsilon = \frac{V - \alpha \mu}{2}$, $s = 0$, $j = 0$
+  \item $j = j + 1$ 
+  \item Draw three random numbers from a $U(0,1)$ distribution: $u_1$, $u_2$, $u_3$ \marginnote{In our R implementation of the VPIN simulation we do not in fact employ $u_3$ as the parameter to the inverse CDF of the Poisson distribution as R already comes with an efficient way to simulate random Poisson variables, namely the function `rpois` }
+  \item If $u_1 < \alpha$
+  \begin{enumerate}
+    \item If $u_2 < \delta$
+      \begin{enumerate}
+        \item $V_j^B = F^{-1}(u_3, \epsilon)$
+        \item $V_j^S = F^{-1}(u_3, \mu + \epsilon)$
+      \end{enumerate}
+    \item If $u_2 \geq \delta$
+      \begin{enumerate}
+        \item $V_j^B = F^{-1}(u_3, \mu + \epsilon)$
+        \item $V_j^S = F^{-1}(u_3, \epsilon)$
+      \end{enumerate}
+  \end{enumerate}
+  \item If $u_1 < \alpha$
+    \begin{enumerate}
+      \item $V_j^B = F^{-1}(u_3, \epsilon)$
+      \item $V_j^S = V_j^B$
+    \end{enumerate}
+  \item If $j = n$
+    \begin{enumerate}
+      \item $j = 0$
+      \item $s = s + 1$
+      \item $VPIN_s = \frac{\sum_{j=1}^n |V_j^S - V_j^B|}{\sum_{j=1}^n (V_j^S - V_j^B )}$
+    \end{enumerate}
+  \item If $s < S$, loop to Step 3
+  \item Compute results:
+    \begin{enumerate}
+      \item $E[VPIN] = \frac{1}{S} \sum_{s=1}^S VPIN_s$
+      \item $V[VPIN] = \frac{1}{S-1} \sum_{s=1}^S VPIN_s^2 - \frac{1}{S(S-1)} (\sum_{s=1}^S VPIN_s)^2$
+    \end{enumerate}
+\end{enumerate}
+
+```{r cache=FALSE, echo=FALSE}
+knitr::read_chunk('../code/VPIN-Sim.R')
+```
+
+```{r vpin.sim, echo=FALSE}
+```
+
+To illustrate the analysis of the simulated data, we shall examine the steps for one hypothetical trading day, usaing the following parameters:
+```{r, echo=TRUE}
+V = 55 #size of each volume bucket
+n = 100 #number of volume buckets
+alpha = 0.28 #probability of information event
+delta = 0.33 #probability of bad news event
+mu = 40 #arrival rate of informed trader
+epsilon = (V - alpha * mu)/2 #arrival rate of uninformed trader
+
+trades = generate.trades.sim(n, alpha, delta, epsilon, mu)
+```
+
+#Exploratory analysis of data
+
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+qplot(Buy, data = trades, geom = "density")
+```
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+df_melt = melt(trades, id.vars = 'Buckets')
+ggplot(df_melt, aes(x = Buckets, y = value)) + 
+    geom_line() + 
+    facet_wrap(~ variable, scales = 'free_y', ncol = 1)
+```
+
+
+Show histogram, fitted density estimate to display overdispersion
+
+Run jump analysis for optimal number of clusters
+
+Run kmeans on the data and visualise the clusters
+
+Interpret the cluster centroids in order to find appropriate starting values of $\epsilon$, $\mu$, $\lambda_{b;i}$ and $\lambda_{s;j}$
+
+#Fit HMM to data given inital values
+
+Run for multiple values of $m$ and outline model selection process via AIC and BIC.
+
+#Local Decoding to accuracy of hidden state identification
+
+On identification of the 'best' model, use this fitted model to run analysis of simulated data to see if expected hidden state matches the predetermined hidden state for all $t = 1 \dots T$ 
+
+Run correlation analysis gainst private information state buckets and VPIN values
+
+#Prediction of subsequent states
+
+Run prediction against cross-validation set and potentially hint at Market Maker implications

@@ -135,7 +135,7 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     la  <-  fb$la                                            
     lb  <-  fb$lb                                            
     c   <-  max(la[,t])                                      
-    llk <- c+log(sum(exp(la[,t]-c)))
+    llk <- c+log(sum(exp(la[,t]-c))) #log-sum-exp trick to prevent underflow
        
     #initiliase a state index lookup table for resolving (i,j) -> stateIndex
     stateEnv<-new.env() 
@@ -241,10 +241,59 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
   NA                                                         
 }          
 
+# ---- state decoding ----
+
+bi.pois.HMM.state_probs <-                                    
+  function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL,...)                 
+  {                                                           
+    if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m)) 
+    n          <- dim(x)[1]                                    
+    fb         <- bi.pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,        
+                                      delta=delta)                               
+    la         <- fb$la                                        
+    lb         <- fb$lb                                        
+    c          <- max(la[,n])                                  
+    llk        <- c+log(sum(exp(la[,n]-c)))                   
+    stateprobs <- matrix(NA,ncol=n,nrow=m)                     
+    for (i in 1:n) stateprobs[,i]<-exp(la[,i]+lb[,i]-llk)     
+    stateprobs                                                
+  }                                                           
+
+bi.pois.HMM.local_decoding <- function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL,...)                 
+  {  
+    n   <- dim(x)[1]
+    stateprobs <- bi.pois.HMM.state_probs(x,m,lambda_buy,lambda_sell,gamma,delta=delta)      
+    ild <- rep(NA,n)                                           
+    for (i in 1:n) ild[i]<-which.max(stateprobs[,i])           
+    ild                                                        
+  }                                                           
+
+# ---- prediction ----
+
+bi.pois.HMM.state_prediction <- function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL,H=1,...)
+  {                                                           
+    if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))  
+    n          <- dim(x)[1]
+    fb         <- bi.pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta=delta)                  
+    la         <- fb$la                                       
+    c          <- max(la[,n])                                 
+    llk        <- c+log(sum(exp(la[,n]-c)))                    
+    statepreds <- matrix(NA,ncol=H,nrow=m)                     
+    foo1       <- exp(la[,n]-llk)                              
+    foo2       <- diag(m)                                      
+    for (i in 1:H)                                             
+    {                                                        
+      foo2           <- foo2%*%gamma                           
+      statepreds[,i] <- foo1%*%foo2                            
+    }                                                        
+    statepreds                                                 
+  }                                                           
+
+
 # ---- test ----
 
-lambda_buy = c(1,20,30)
-lambda_sell = c(10,20)
+lambda_buy = c(20,30)
+lambda_sell = c(5,20)
 
 m_buy = length(lambda_buy)
 m_sell = length(lambda_sell)
@@ -257,9 +306,12 @@ gamma = gamma/apply(gamma,1,sum)#create stochastic transition matrix
 
 # Generate synthetic data
 set.seed(1)
-n <- 10
+n <- 50
 x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
-delta = c(0.3, 0.3, 0.1, 0.1, 0.1, 0.1)
-print(bi.pois.HMM.EM(x,m_buy,m_sell,c(10,11,12), c(13,14),gamma,delta))
+delta = matrix(rep(1, mn), ncol = mn)
+delta = delta_buy/apply(delta_buy, 1, sum)
 
+# model <- bi.pois.HMM.EM(x,m_buy,m_sell,c(18,27), c(3,17),gamma,delta)
+# print(model)
+# states = bi.pois.HMM.local_decoding(x, mn, model$lambda_buy, model$lambda_sell,model$gamma)
 

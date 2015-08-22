@@ -147,3 +147,24 @@ We repeat the above iterative scheme a large number of times until we meet our c
 The problem remains that without suitable starting values for the initial distribution $\boldsymbol{\delta}$, and the transition matrix $\boldsymbol{\Gamma}$, the EM algorithm maay converge on local not global optima. Therefore a strategy for mitigating this problem is required.
 
 #Estimation of Trading Motives via K-Means Clustering
+
+TODO
+
+#Decoding
+
+A result that shall be used later on in this work is related to identifying the most likely state at a given $t$ given the history of the observed values This process is known as decoding.  
+
+As shown in \eqref{eq:alphaBeta} the joint distribution was stated as:
+
+$$Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}, C_t = i) = \alpha_t(i) \beta_{t}(i)$$
+
+And hence, using Bayes rule, we can deduct the conditional distribution of $C_t$ given the observations as:
+
+\begin{align}
+  \begin{aligned}\label{eq:localDecoding}
+  Pr(C_t = i | \mathbf{X}^{(T)} = \mathbf{x}^{(T)}) &= \frac{Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}, C_t = i)}{Pr(\mathbf{X}^{(T)} = \mathbf{x}^{(T)}}\\
+  &= \frac{\alpha_t(i) \beta_{t}(i)}{L_T}
+  \end{aligned}
+\end{align}
+
+
