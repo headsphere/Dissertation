@@ -306,11 +306,11 @@ gamma = gamma/apply(gamma,1,sum)#create stochastic transition matrix
 
 # Generate synthetic data
 <<<<<<< HEAD
-set.seed(1)
-n <- 50
-x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
-delta = matrix(rep(1, mn), ncol = mn)
-delta = delta_buy/apply(delta_buy, 1, sum)
+# set.seed(1)
+# n <- 50
+# x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
+# delta = matrix(rep(1, mn), ncol = mn)
+# delta = delta_buy/apply(delta_buy, 1, sum)
 =======
 # set.seed(1)
 # n <- 10

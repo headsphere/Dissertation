@@ -1,5 +1,5 @@
 ---
-title: “A Hidden Markov Model approach to evaluating the effectiveness of Volume Synchronized Probability of Information-based Trading (VPIN)”
+title: “A Hidden Markov Model Approach to Estimating VPIN”
 header-includes:
    - \usepackage[]{algpseudocode}
    - \usepackage[]{verbatim}

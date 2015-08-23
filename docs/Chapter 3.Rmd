@@ -148,7 +148,7 @@ The problem remains that without suitable starting values for the initial distri
 
 #Estimation of Trading Motives via K-Means Clustering
 
-TODO
+TODO @Sugar2003a
 
 #Decoding
 

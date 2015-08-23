@@ -48,14 +48,27 @@ x = c(d1,d2)
 
 This code generates a series of x values according to a mixture of two Poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
 
-We can see from both the following plots of the time series and the histograms the data appears to conform to two separate distributions, or states, as it were:  
+We can see from both the following plots of the time series and the kernel density estimates the data appears to conform to two separate distributions, or states, as it were:  
+
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE,fig.cap="Time series of simulated Poisson mixture"}
+library(ggplot2)
+library(reshape2)
+df = data.frame(Time = 1:100, Values = x)
+df_melt = melt(df, id.vars = 'Time')
+ggplot(df_melt, aes(x = Time, y = value)) + 
+    geom_line()
+```
+
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture"}
+ggplot(df_melt,aes(x=x, fill=variable)) + geom_density(alpha=0.25)
+```
 
 ```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Time series of simulated Poisson mixture"}
-  plot.ts(x, xlab = NULL, ylab = NULL)
+  # plot.ts(x, xlab = NULL, ylab = NULL)
 ```
-```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Histogram of simulated Poisson mixture with fitted density"}
-  hist(x, breaks=30, freq = F, main=NULL, xlab = NULL, ylab = NULL)
-  lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
+```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture"}
+  # hist(x, breaks=30, freq = F, main=NULL, xlab = NULL, ylab = NULL)
+  # lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
 ```
 
 
