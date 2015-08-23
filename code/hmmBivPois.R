@@ -3,22 +3,6 @@ statdist <- function(gamma){
   matrix(1,1,m) %*% solve(diag(1,m) - gamma + matrix(1,m,m))
 }
 
-bi.pois.HMM.generate_sample <- function(n,m,lambda_buy,lambda_sell,gamma,delta=NULL)
-{
-  x = matrix(nrow = n, ncol = 2)
-  if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))
-  lambda_combo = expand.grid(lambda_buy, lambda_sell)#generates all the pairwise combinations of lambdas
-  mvect <- 1:m
-  state <- numeric(n)
-  state[1] <- sample(mvect,1,prob=delta)
-  for (i in 2:n)
-    state[i]<-sample(mvect,1,prob=gamma[state[i-1],])
-  for (i in 1:n)
-  {
-    x[i,] = rpois(2, t(as.vector(lambda_combo)[state[i],]))
-  }
-  x
-}
 
 PMat <- function(t, lambda_buy, lambda_sell) {
   buy_t <- t[1]
@@ -66,16 +50,15 @@ PMatAll <- function(x, lambda_buy, lambda_sell) {
 # ---- bi.pois.HMM.lalphabeta ----
 bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)  
 {                                                           
-  #browser()
+  # browser()
   if(is.null(delta)){
     delta = solve(t(diag(m)-gamma+1),rep(1,m))   
   }
   n          <- dim(x)[1]
   lalpha     <- lbeta <- matrix(NA,m,n)                       
-  # allprobs <- outer(x,lambda,dpois)                     # <- OLD
-  #allprobs   <- drop(outer(x,mu,dnorm,sd=sigma %x% rep(1,n)))  # nxm array of probabilities for the n observations under the m distributions
+  allprobs   <- PMatAll(x, lambda_buy, lambda_sell)
   # alpha
-  foo        <- delta %*% PMat(x[1,], lambda_buy, lambda_sell)
+  foo        <- delta * allprobs[1,]
   # check that a delta argument does not encounter zero-prob states, which would cause all foo to be zero
   if(sum(foo) == 0) foo <- delta
   sumfoo     <- sum(foo)                                    
@@ -85,7 +68,7 @@ bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
 
   for (i in 2:n)                                             
   {                                                        
-    foo        <- foo %*% gamma %*% PMat(x[i,], lambda_buy, lambda_sell)    
+    foo        <- foo %*% gamma * allprobs[i,]
     sumfoo     <- sum(foo)                                   
     lscale     <- lscale+log(sumfoo)                         
     foo        <- foo/sumfoo                                 
@@ -98,7 +81,7 @@ bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
   lscale     <- log(m)                                       # p46 
   for (i in (n-1):1)                                         
   {                                                        
-    foo        <- gamma %*% (PMat(x[i,], lambda_buy, lambda_sell) %*% foo)           # p61    
+    foo        <- gamma %*%(allprobs[i+1,] * foo)           # p61    
     lbeta[,i]  <- log(foo)+lscale                            
     sumfoo     <- sum(foo)                                   
     foo        <- foo/sumfoo                                 
@@ -148,6 +131,7 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
         counter = counter + 1
       }
     }
+    # browser()
     
     #calculate gamma
     for (ij in 1:m)     
@@ -172,10 +156,10 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     }
      gamma.next <- gamma.next/apply(gamma.next,1,sum)#"stochastisize"
     print(gamma.next)
-    if(sum(gamma.next == 0) > 0)
-    {
-      #browser()
-    }
+#     if(sum(gamma.next == 0) > 0)
+#     {
+#       #browser()
+#     }
     
     #calculate lambda_buy_i
     for (i in 1:m_buy)               
@@ -292,6 +276,23 @@ bi.pois.HMM.state_prediction <- function(x,m,lambda_buy,lambda_sell,gamma,delta=
 
 # ---- test ----
 
+bi.pois.HMM.generate_sample <- function(n,m,lambda_buy,lambda_sell,gamma,delta=NULL)
+{
+  x = matrix(nrow = n, ncol = 2)
+  if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))
+  lambda_combo = expand.grid(lambda_buy, lambda_sell)#generates all the pairwise combinations of lambdas
+  mvect <- 1:m
+  state <- numeric(n)
+  state[1] <- sample(mvect,1,prob=delta)
+  for (i in 2:n)
+    state[i]<-sample(mvect,1,prob=gamma[state[i-1],])
+  for (i in 1:n)
+  {
+    x[i,] = rpois(2, t(as.vector(lambda_combo)[state[i],]))
+  }
+  x
+}
+
 lambda_buy = c(20,30)
 lambda_sell = c(5,20)
 
@@ -305,21 +306,17 @@ gamma <- matrix(rep(1,mn), nrow = mn, ncol = mn, byrow = TRUE)
 gamma = gamma/apply(gamma,1,sum)#create stochastic transition matrix
 
 # Generate synthetic data
-<<<<<<< HEAD
 # set.seed(1)
 # n <- 50
 # x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
-# delta = matrix(rep(1, mn), ncol = mn)
-# delta = delta_buy/apply(delta_buy, 1, sum)
-=======
+delta = matrix(rep(1, mn), ncol = mn)
+delta = delta/apply(delta, 1, sum)
 # set.seed(1)
-# n <- 10
+n <- 10
 # x = bi.pois.HMM.generate_sample(n, mn, lambda_buy,lambda_sell, gamma)
 # delta = c(0.3, 0.3, 0.1, 0.1, 0.1, 0.1)
 # print(bi.pois.HMM.EM(x,m_buy,m_sell,c(10,11,12), c(13,14),gamma,delta))
->>>>>>> ffad58c555062cc5bc913c9d1529f8f69d61823a
-
-# model <- bi.pois.HMM.EM(x,m_buy,m_sell,c(18,27), c(3,17),gamma,delta)
+# model <- bi.pois.HMM.EM(x,m_buy,m_sell,lambda_buy, lambda_sell,gamma,delta)
 # print(model)
 # states = bi.pois.HMM.local_decoding(x, mn, model$lambda_buy, model$lambda_sell,model$gamma)
 

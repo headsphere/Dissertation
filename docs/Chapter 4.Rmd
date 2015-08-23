@@ -123,11 +123,6 @@ With the optimal number of clusters identified we can now proceed with the k-mea
 cl <- kmeans(tradesMatrix, 3)
 ```
 
-```{r, echo=FALSE, results='asis'}
-clustersDf = data.frame(cbind(cl$centers, cl$size))
-names(clustersDf) = c("Buy", "Sell", "Cluster Size")
-xtable(clustersDf)
-```
 
 ```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
 trades$cluster=factor(cl$cluster)
@@ -138,6 +133,11 @@ ggplot(data=trades, aes(x=Buy, y=Sell, color=cluster )) +
  geom_point(data=centers, aes(x=buy,y=sell, color="Center"), size=52, alpha=.3, show_guide=FALSE)
 ```
 
+```{r, echo=FALSE, results='asis'}
+clustersDf = data.frame(cbind(cl$centers, cl$size))
+names(clustersDf) = c("Buy", "Sell", "Cluster Size")
+xtable(clustersDf)
+```
 
 Using the theory on trading motivations outlined in section TODO, we can now interpret the cluster centroids in order to find appropriate starting values of $\epsilon$, $\mu$, $\lambda_{b;i}$ and $\lambda_{s;j}$. It is somewhat unrealistically simple given our small simlated data set, but the intuition is rather obvious. We know a priori that there are three states:
 
@@ -233,9 +233,53 @@ detach(clustersDf)
 
 #Fit HMM to data given inital values
 
+```{r cache=FALSE, echo=FALSE}
+source('../code/hmmBivPois.R')
+source('../code/hmmUnivNorm.r')
+source('../code/A2.R')
+```
+
+```{r cache=TRUE, results='hide'}
+
+runEM <- function (lambda_buy, lambda_sell, trades) {
+  m_buy = length(lambda_buy)
+  m_sell = length(lambda_sell)
+  mn <- m_buy * m_sell
+  
+  delta_buy = matrix(rep(1, mn), ncol = mn)
+  delta_buy = delta_buy/apply(delta_buy, 1, sum)
+  
+  gamma <- matrix(rep(1,mn), nrow = mn, ncol = mn, byrow = TRUE)
+  gamma = gamma/apply(gamma,1,sum)
+  
+  model <- bi.pois.HMM.EM(cbind(trades$Buy,trades$Sell),m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta_buy)
+}
+
+lambda_buy = c(epsilonBuy, epsilonBuy + muBuy, epsilonBuy)
+lambda_sell = c(epsilonSell,epsilonSell, epsilonSell + muSell)
+m3 = runEM(lambda_buy, lambda_sell, trades)
+print(m3)
+
+lambda_buy = mean(trades$Buy)
+lambda_sell = mean(trades$Sell)
+m1 = runEM(lambda_buy, lambda_sell, trades)
+print(m1)
+
+lambda_buy = c(10,20,30,40)
+lambda_sell = c(10,20,30,40)
+m4 = runEM(lambda_buy, lambda_sell, trades)
+print(m1)
+
+```
+
 Run for multiple values of $m$ and outline model selection process via AIC and BIC.
 
 #Local Decoding to accuracy of hidden state identification
+
+```{r eval=FALSE}
+states = bi.pois.HMM.local_decoding(testdata, mn, model$lambda_buy, model$lambda_sell,gamma)
+stateProbs = bi.pois.HMM.state_probs(testdata, mn, model$lambda_buy, model$lambda_sell,gamma)
+```
 
 On identification of the 'best' model, use this fitted model to run analysis of simulated data to see if expected hidden state matches the predetermined hidden state for all $t = 1 \dots T$ 
 
