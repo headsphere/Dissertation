@@ -102,15 +102,12 @@ ggplot(df_melt,aes(x=value, fill=variable)) + geom_density(alpha=0.25)
 
 
 ```{r cache=FALSE, echo=FALSE}
-knitr::read_chunk('../code/jump.R')
-```
-
-```{r jump, echo=FALSE}
+source('../code/jump.R')
 ```
 
 Following the Jump methodology of @Sugar2003a we run the k-means clustering algorithm against the trade imbalance data for $K = 1 \dots 10$. @Sugar2003a provide a rigourous theoretical justification for the ability of the Jump method to calculate the optimum number of clusters. The following output shows that there is an elbow in the distortion levels when the cluster size is three. Again this matches with our knowledge of the underlying data generating process whereby we are either in a) a no-news state b) a news state with private information, or c) a news state without private information. 
 
-```{r, fig.width = 10, fig.height = 7, fig.fullwidth = TRUE, echo=FALSE, results='hide'}
+```{r, fig.width = 10, fig.height = 7, fig.fullwidth = TRUE, echo=FALSE, results='hide', warning=FALSE}
 tradesMatrix <- as.matrix(cbind(trades$Buy, trades$Sell),ncol=2)
 colnames(tradesMatrix) <- c("buy", "sell")
 temp <- jump(tradesMatrix,y=c(1.5,2,2.5),rand=10,trace=F,plotjumps=TRUE)
@@ -231,15 +228,18 @@ $$\lambda_b = \begin{pmatrix}
 detach(clustersDf)
 ```
 
+\newpage
+
 #Fit HMM to data given inital values
 
 ```{r cache=FALSE, echo=FALSE}
 source('../code/hmmBivPois.R')
-source('../code/hmmUnivNorm.r')
-source('../code/A2.R')
 ```
+Run for multiple values of $m$ and outline model selection process via AIC and BIC.
 
-```{r cache=TRUE, results='hide'}
+TODO: m=3 should be giving us lowest AIC and BIC, probably still a bug in the code.
+
+```{r cache=TRUE, echo=FALSE, results='hide'}
 
 runEM <- function (lambda_buy, lambda_sell, trades) {
   m_buy = length(lambda_buy)
@@ -257,22 +257,42 @@ runEM <- function (lambda_buy, lambda_sell, trades) {
 
 lambda_buy = c(epsilonBuy, epsilonBuy + muBuy, epsilonBuy)
 lambda_sell = c(epsilonSell,epsilonSell, epsilonSell + muSell)
-m3 = runEM(lambda_buy, lambda_sell, trades)
-print(m3)
+model = runEM(lambda_buy, lambda_sell, trades)
 
-lambda_buy = mean(trades$Buy)
-lambda_sell = mean(trades$Sell)
-m1 = runEM(lambda_buy, lambda_sell, trades)
-print(m1)
+m1 = runEM(mean(trades$Buy), mean(trades$Sell), trades)
+m2 = runEM(c(2,4), c(2,4), trades)
+m3 = model
+```
 
-lambda_buy = c(10,20,30,40)
-lambda_sell = c(10,20,30,40)
-m4 = runEM(lambda_buy, lambda_sell, trades)
-print(m1)
+```{r, echo=FALSE, cache=TRUE, results='hide', fig.width = 10, fig.height = 6, fig.fullwidth = FALSE, fig.cap = "Diagostics plot for numbers of states"}
+
+diagDf = data.frame(
+  m=c(1,2,3), 
+  negLLK = c(m1$mllk, m2$mllk, m3$mllk), 
+  BIC = c(m1$BIC, m2$BIC, m3$BIC), 
+  AIC = c(m1$AIC, m2$AIC, m3$AIC))
+
+df_melt = melt(diagDf, id.vars = 'm')
+ggplot(data=df_melt, aes(x = m, y = value, colour=variable)) + 
+    geom_line()
+
+# m4 = runEM(c(10,20,30,40), c(10,20,30,40), trades)
+# print(m4)
 
 ```
 
-Run for multiple values of $m$ and outline model selection process via AIC and BIC.
+Now we present the fitted values for our chosen model, that of $m=3$:
+
+```{r, echo=FALSE, results='asis'}
+xtable(model$gamma, caption = "Gamma: Fitted transition probability matrix")
+
+lambdaDf <- data.frame(
+  `Lambda Buy`=model$lambda_buy, 
+  `Lambda Sell`=model$lambda_sell
+  )
+
+xtable(lambdaDf, caption = "Lambda Buy and Sell: Fitted fitted arrival rates of informed and uninformed traders")
+```
 
 #Local Decoding to accuracy of hidden state identification
 

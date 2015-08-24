@@ -1,8 +1,5 @@
 \chapter{References}
 
-TODO
-r write.bibtex(file="library.bib", append=FALSE,biblatex=TRUE)
-
 [^2010flashcrash]: https://en.wikipedia.org/wiki/2010_Flash_Crash
 
 [^vpin-calculate]:http://rof.oxfordjournals.org/content/suppl/2014/09/25/rfu041.DC1/Web_appedix.pdf

@@ -9,48 +9,36 @@ generate.trades.sim <- function (n, alpha, delta, epsilon, mu) {
     Vbuy = numeric(n) #buy volume buckets
     Vsell = numeric(n) #sell volume buckets
     j = 1
-   
    while(j <= n){
-      
       u1 = runif(1)
       u2 = runif(1)
-      
       if(u1 < alpha){ #we have an information event 
         if(u2 < delta){ #its a bad news event
-          
           #only uninformed traders buy when there's bad news
           Vbuy[j] = rpois(1, epsilon)  
-          
           #both informed and uninformed traders sell when there's bad news
           Vsell[j] = rpois(1, mu + epsilon)
         }
         else{ #its a good news event
-          
           #both informed and uninformed traders buy when there's good news
           Vbuy[j] = rpois(1, mu + epsilon)
-          
           #only uninformed traders sell when there's good news
           Vsell[j] = rpois(1, epsilon)
         }
       }
-      else{
-        #no information event
-        
+      else{ #no information event
         #uninformed traders buy and sell in equal quantities 
         Vbuy[j] = rpois(1, epsilon)
         Vsell[j] = Vbuy[j]
       }
-      
       j = j + 1
     }
-    
   #   Vpin[s] = sum(abs(Vbuy - Vsell)) / sum(Vbuy + Vsell)
   #   
   #   s = s + 1
   # }
   # meanVpin = sum(Vpin)/numSim
   # varVpin =  sum(Vpin^2)/(numSim - 1) - (sum(Vpin)/(numSim * (numSim - 1)))^2
-    
     return(data.frame(Buckets = 1:n, Buy=Vbuy, Sell=Vsell))
 }
 
