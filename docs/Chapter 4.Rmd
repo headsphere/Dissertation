@@ -55,11 +55,8 @@ We employ a Monte Carlo algorithm to simulate order flow based off the known par
     \end{enumerate}
 \end{enumerate}
 
-```{r cache=FALSE, echo=FALSE}
-knitr::read_chunk('../code/VPIN-Sim.R')
-```
-
-```{r vpin.sim, echo=FALSE}
+```{r echo=FALSE}
+source('../code/VPIN-Sim.R')
 ```
 
 To illustrate the analysis of the simulated data, we shall examine the steps for one hypothetical trading day, using the following parameters:
@@ -264,22 +261,20 @@ m2 = runEM(c(20,40), c(20,40), trades)
 m3 = model
 ```
 ```{r}
-m4 = runEM(c(10,20,30,40), c(10,20,30,40), trades)
+# m4 = runEM(c(10,20,30,40), c(10,20,30,40), trades)
 ```
 
 ```{r, echo=FALSE, cache=FALSE, results='hide', fig.width = 10, fig.height = 6, fig.fullwidth = FALSE, fig.cap = "Diagostics plot for numbers of states"}
 
 diagDf = data.frame(
-  m=c(1,2,3,4), 
-  negLLK = c(m1$mllk, m2$mllk, m3$mllk, m4$mllk), 
-  BIC = c(m1$BIC, m2$BIC, m3$BIC, m4$BIC), 
-  AIC = c(m1$AIC, m2$AIC, m3$AIC, m4$AIC))
+  m=c(1,2,3), 
+  negLLK = c(m1$mllk, m2$mllk, m3$mllk), 
+  BIC = c(m1$BIC, m2$BIC, m3$BIC), 
+  AIC = c(m1$AIC, m2$AIC, m3$AIC))
 
 df_melt = melt(diagDf, id.vars = 'm')
 ggplot(data=df_melt, aes(x = m, y = value, colour=variable)) + 
     geom_line()
-
-
 ```
 
 Now we present the fitted values for our chosen model, that of $m=3$:
@@ -292,7 +287,7 @@ lambdaDf <- data.frame(
   `Lambda Sell`=model$lambda_sell
   )
 
-xtable(lambdaDf, caption = "Lambda Buy and Sell: Fitted fitted arrival rates of informed and uninformed traders")
+xtable(lambdaDf, caption = "Lambda Buy and Sell: Fitted arrival rates of informed and uninformed traders")
 ```
 
 #Local Decoding to accuracy of hidden state identification

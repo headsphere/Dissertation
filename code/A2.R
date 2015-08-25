@@ -17,10 +17,12 @@ pois.HMM.generate_sample <-
 
 pois.HMM.lalphabeta<-function(x,m,lambda,gamma,delta=NULL)  
 {                                                           
+ # browser()
  if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))   
  n          <- length(x)                                    
  lalpha     <- lbeta<-matrix(NA,m,n)                       
- allprobs   <- outer(x,lambda,dpois)                        
+ allprobs   <- outer(x,lambda,dpois)/100
+ browser()
  foo        <- delta*allprobs[1,]                           
  sumfoo     <- sum(foo)                                    
  lscale     <- log(sumfoo)                                 
@@ -52,19 +54,21 @@ pois.HMM.lalphabeta<-function(x,m,lambda,gamma,delta=NULL)
 pois.HMM.EM <- function(x,m,lambda,gamma,delta,            
                         maxiter=1000,tol=1e-6,...)         
 {                                                          
+ # browser()
  n              <- length(x)                                        
  lambda.next    <- lambda                                   
  gamma.next     <- gamma                                    
  delta.next     <- delta                                   
  for (iter in 1:maxiter)                                    
    {                                                        
-   lallprobs    <- outer(x,lambda,dpois,log=TRUE)           
+   allprobs    <- outer(x,lambda,dpois)/100
+   lallprobs    <- log(allprobs)
    fb  <-  pois.HMM.lalphabeta(x,m,lambda,gamma,delta=delta)   
    la  <-  fb$la                                            
    lb  <-  fb$lb                                            
    c   <-  max(la[,n])                                      
    llk <- c+log(sum(exp(la[,n]-c)))                         
-   browser()
+   # browser()
    for (j in 1:m)                                           
    {                                                       
      for (k in 1:m)                                         
@@ -76,6 +80,7 @@ pois.HMM.EM <- function(x,m,lambda,gamma,delta,
                      sum(exp(la[j,]+lb[j,]-llk))            
    }                                                       
    gamma.next <- gamma.next/apply(gamma.next,1,sum)         
+   print(gamma.next)
    delta.next <- exp(la[,1]+lb[,1]-llk)                     
    delta.next <- delta.next/sum(delta.next)                 
    crit       <- sum(abs(lambda-lambda.next)) +             
@@ -261,7 +266,7 @@ pois.HMM.pseudo_residuals <-
  npsr                                                       
  }                                                           
 
-lambda <- c(2,10,6)
+lambda <- c(10, 20,30, 50, 80, 70, 90, 100, 10)
 m <- length(lambda)
 #gamma <- matrix(c(0.9,0.1,0.3,0.7), nrow = m, ncol = m, byrow = TRUE)
 gamma <- matrix(rep(1,m*m), nrow = m, ncol = m, byrow = TRUE)
@@ -270,4 +275,4 @@ n <- 100
 set.seed(1)
 x = pois.HMM.generate_sample(n,m,lambda, gamma)
 delta = statdist(gamma)
-pois.HMM.EM(x,m,c(1,2,3),gamma,delta)
+pois.HMM.EM(x,m,lambda,gamma,delta)

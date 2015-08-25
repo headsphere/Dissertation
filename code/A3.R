@@ -170,6 +170,7 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
    }                                                      
    else if(crit<tol)                                             
    {                                                      
+     browser()
      np     <- m*m+m-1                                      
      AIC    <- -2*(llk-np)                                  
      BIC    <- -2*llk+np*log(n)                             

@@ -60,14 +60,14 @@ norm.HMM.lalphabeta<-function(x,m,mu,sigma,gamma,delta=NULL)
 }
 
 # case m=2
-m= 2
-mu = c(-3,3)
-sigma = c(1,2)
-gamma= rbind(c(0.9,0.1),c(0.1,0.9))
-delta= statdist(gamma)
-n=200
-# Generate synthetic data
-x <- norm.HMM.generate_sample(n,m,mu,sigma,gamma,delta)
-# Fit normal-HMM with the EM algorith,
-#res <- norm.HMM.EM(x,m,mu,sigma,gamma,delta)
-res <- norm.HMM.lalphabeta(x,m,mu,sigma,gamma,delta)
+# m= 2
+# mu = c(-3,3)
+# sigma = c(1,2)
+# gamma= rbind(c(0.9,0.1),c(0.1,0.9))
+# delta= statdist(gamma)
+# n=200
+# # Generate synthetic data
+# x <- norm.HMM.generate_sample(n,m,mu,sigma,gamma,delta)
+# # Fit normal-HMM with the EM algorith,
+# #res <- norm.HMM.EM(x,m,mu,sigma,gamma,delta)
+# res <- norm.HMM.lalphabeta(x,m,mu,sigma,gamma,delta)

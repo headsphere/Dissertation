@@ -65,6 +65,11 @@ bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
   lscale     <- log(sumfoo)                                 
   foo        <- foo/sumfoo                                   
   lalpha[,1] <- log(foo)+lscale
+  
+#   if(any(is.infinite(lalpha[,1])))
+#   {
+#     browser()
+#   }
 
   for (i in 2:n)                                             
   {                                                        
@@ -113,6 +118,7 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
   delta.next       <- delta
   for (iter in 1:maxiter)                                    
   {                                                        
+    # browser()
     lallprobs    <- log(PMatAll(x, lambda_buy, lambda_sell))
     fb  <-  bi.pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta)   
     la  <-  fb$la                                            
@@ -134,32 +140,37 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     # browser()
     
     #calculate gamma
-    for (ij in 1:m)     
-    {
-      #because gamma is mn * mn, ij represents (i,j) the combination of buy and sell states  
-      for (kl in 1:m)  
-      {
-        #similarly kl here represents (k,l) 
-        numerator <- vhat(ij,kl)
-
-        denominator = 0
-        for (k in 1:m_buy)     
-        {
-          for (l in 1:m_sell)  
-          {
-            klprime = stateEnv[[paste(k,l)]]
-            denominator = denominator + vhat(ij, klprime)
-          }
-        }
-        gamma.next[ij,kl] <- numerator / denominator
-      }
+    for (j in 1:m)                                           
+    {                                                       
+      for (k in 1:m)                                         
+      {                                                      
+        gamma.next[j,k] <- gamma[j,k]*sum(exp(la[j,1:(n-1)]+   
+                                                lallprobs[2:n,k]+lb[k,2:n]-llk))  
+      }                                                      
     }
-     gamma.next <- gamma.next/apply(gamma.next,1,sum)#"stochastisize"
+#     for (ij in 1:m)     
+#     {
+#       #because gamma is mn * mn, ij represents (i,j) the combination of buy and sell states  
+#       for (kl in 1:m)  
+#       {
+#         gamma.next[ij,kl] <- gamma[ij,kl] * sum(exp(la[ij,1:(t-1)] + lallprobs[2:t,kl] + lb[kl,2:t] - llk))
+#       }
+#     }
+    if(any(is.na(gamma.next/apply(gamma.next,1,sum))))
+    {
+      browser()
+    }
+    gamma.next <- gamma.next/apply(gamma.next,1,sum)#"stochastisize"
     print(gamma.next)
+    # browser()
 #     if(sum(gamma.next == 0) > 0)
 #     {
-#       #browser()
+#       # browser()
 #     }
+    if(all(round(apply(gamma.next,1,sum)) != 1))
+    {
+      browser()
+    }
     
     #calculate lambda_buy_i
     for (i in 1:m_buy)               
@@ -195,7 +206,15 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
     
     #calculate delta
     delta.next <- uhat(t = 1)
+#     if(any(delta.next == 0))
+#     {
+#       browser()
+#     }
     delta.next <- delta.next/sum(delta.next)                 
+#     if(any(delta.next == 0))
+#     {
+#       browser()
+#     }
     
     crit       <- sum(abs(lambda_buy-lambda_buy.next)) +             
                   sum(abs(lambda_sell-lambda_sell.next)) +
@@ -204,7 +223,7 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
 
     if(is.na(crit))
     {
-      browser()
+      # browser()
     }
     
     print(paste("Iteration:",iter," Crit:", crit, "LLK:", llk))  
