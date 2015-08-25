@@ -51,95 +51,72 @@ PMatAll <- function(x, lambda_buy, lambda_sell) {
 bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)  
 {                                                           
   # browser()
-  if(is.null(delta)){
-    delta = solve(t(diag(m)-gamma+1),rep(1,m))   
-  }
+  if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))   
   n          <- dim(x)[1]
-  lalpha     <- lbeta <- matrix(NA,m,n)                       
-  allprobs   <- PMatAll(x, lambda_buy, lambda_sell)
-  # alpha
-  foo        <- delta * allprobs[1,]
-  # check that a delta argument does not encounter zero-prob states, which would cause all foo to be zero
-  if(sum(foo) == 0) foo <- delta
+  lalpha     <- lbeta<-matrix(NA,m,n)                       
+  allprobs   <- PMatAll(x,lambda_buy, lambda_sell)
+  foo        <- delta*allprobs[1,]                           
   sumfoo     <- sum(foo)                                    
   lscale     <- log(sumfoo)                                 
   foo        <- foo/sumfoo                                   
-  lalpha[,1] <- log(foo)+lscale
-  
-#   if(any(is.infinite(lalpha[,1])))
-#   {
-#     browser()
-#   }
-
+  lalpha[,1] <- log(foo)+lscale                              
   for (i in 2:n)                                             
   {                                                        
-    foo        <- foo %*% gamma * allprobs[i,]
+    foo        <- foo%*%gamma*allprobs[i,]                   
     sumfoo     <- sum(foo)                                   
     lscale     <- lscale+log(sumfoo)                         
     foo        <- foo/sumfoo                                 
-    lalpha[,i] <- log(foo)+lscale                            # since alpha = foo * scale, in logs this is log(alpha) = log(foo) + log(scale)
-  }
-  
-  # beta 													   
-  lbeta[,n]  <- rep(0,m)                                     # beta(T) is the m-vector 1 so log(1)=0 so initialise at the zero-vector
-  foo        <- rep(1/m,m)                                   # rescaling beta by its sum=m
-  lscale     <- log(m)                                       # p46 
+    lalpha[,i] <- log(foo)+lscale                            
+  }                                                        
+  lbeta[,n]  <- rep(0,m)                                     
+  foo        <- rep(1/m,m)                                   
+  lscale     <- log(m)                                       
   for (i in (n-1):1)                                         
   {                                                        
-    foo        <- gamma %*%(allprobs[i+1,] * foo)           # p61    
+    foo        <- gamma%*%(allprobs[i+1,]*foo)               
     lbeta[,i]  <- log(foo)+lscale                            
     sumfoo     <- sum(foo)                                   
     foo        <- foo/sumfoo                                 
     lscale     <- lscale+log(sumfoo)                         
   }                                                        
   list(la=lalpha,lb=lbeta)                                   
-}
+}                                                          
 
 # ---- bi.pois.HMM.EM ----
+
 bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,            
-                        maxiter=1000,tol=1e-6,...)         
-{
-  #CDDL helper functions
-  vhat <- function (i,j) {
-    gamma[i,j] * sum(exp(la[i,1:(t-1)] + lallprobs[2:t,j] + lb[j,2:t] - llk))
-  }
-  
-  uhat <- function (j,t) {
-    exp(la[j,t]+lb[j,t]-llk)
-  }
-  
-  t                <- dim(x)[1]   # num of observations
+                           maxiter=1000,tol=1e-6,...)         
+{                                                          
+  # browser()
+  n                <- dim(x)[1]   # num of observations
   m                <- m_buy * m_sell
-  buy              <- x[,1]
-  sell             <- x[,2]
   lambda_buy.next  <- lambda_buy
   lambda_sell.next <- lambda_sell
-  gamma.next       <- gamma
-  delta.next       <- delta
+  gamma.next       <- gamma                                    
+  delta.next       <- delta                                   
+  
+  #initiliase a state index lookup table for resolving (i,j) -> stateIndex
+  stateEnv<-new.env() 
+  counter = 1
+  for (i in 1:m_buy)               
+  {
+    for (j in 1:m_sell)
+    {
+      stateEnv[[paste(i,j)]] = counter
+      counter = counter + 1
+    }
+  }
+  
   for (iter in 1:maxiter)                                    
   {                                                        
-    # browser()
+    # if(iter==80) browser()
     lallprobs    <- log(PMatAll(x, lambda_buy, lambda_sell))
-    fb  <-  bi.pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta)   
+    fb  <-  bi.pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta=delta)   
     la  <-  fb$la                                            
     lb  <-  fb$lb                                            
-    c   <-  max(la[,t])                                      
-    llk <- c+log(sum(exp(la[,t]-c))) #log-sum-exp trick to prevent underflow
-       
-    #initiliase a state index lookup table for resolving (i,j) -> stateIndex
-    stateEnv<-new.env() 
-    counter = 1
-    for (i in 1:m_buy)               
-    {
-      for (j in 1:m_sell)
-      {
-        stateEnv[[paste(i,j)]] = counter
-        counter = counter + 1
-      }
-    }
+    c   <-  max(la[,n])                                      
+    llk <- c+log(sum(exp(la[,n]-c)))                         
     # browser()
-    
-    #calculate gamma
     for (j in 1:m)                                           
     {                                                       
       for (k in 1:m)                                         
@@ -147,30 +124,16 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
         gamma.next[j,k] <- gamma[j,k]*sum(exp(la[j,1:(n-1)]+   
                                                 lallprobs[2:n,k]+lb[k,2:n]-llk))  
       }                                                      
+    }                                                       
+    gamma.next <- gamma.next/apply(gamma.next,1,sum)         
+    # print(gamma.next)
+    
+    uhat <- function (j,t) {
+      exp(la[j,t]+lb[j,t]-llk)
     }
-#     for (ij in 1:m)     
-#     {
-#       #because gamma is mn * mn, ij represents (i,j) the combination of buy and sell states  
-#       for (kl in 1:m)  
-#       {
-#         gamma.next[ij,kl] <- gamma[ij,kl] * sum(exp(la[ij,1:(t-1)] + lallprobs[2:t,kl] + lb[kl,2:t] - llk))
-#       }
-#     }
-    if(any(is.na(gamma.next/apply(gamma.next,1,sum))))
-    {
-      browser()
-    }
-    gamma.next <- gamma.next/apply(gamma.next,1,sum)#"stochastisize"
-    print(gamma.next)
-    # browser()
-#     if(sum(gamma.next == 0) > 0)
-#     {
-#       # browser()
-#     }
-    if(all(round(apply(gamma.next,1,sum)) != 1))
-    {
-      browser()
-    }
+    
+    buy              <- x[,1]
+    sell             <- x[,2]
     
     #calculate lambda_buy_i
     for (i in 1:m_buy)               
@@ -186,7 +149,6 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
       
       lambda_buy.next[i] <- numerator / denominator            
     }
-    print(lambda_buy)
     
     #calculate lambda_sell_j
     for (j in 1:m_sell)                                         
@@ -202,47 +164,40 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
       
       lambda_sell.next[j] <- numerator / denominator
     }
-    print(lambda_sell)
     
-    #calculate delta
-    delta.next <- uhat(t = 1)
-#     if(any(delta.next == 0))
-#     {
-#       browser()
-#     }
+    delta.next <- exp(la[,1]+lb[,1]-llk)                     
     delta.next <- delta.next/sum(delta.next)                 
-#     if(any(delta.next == 0))
-#     {
-#       browser()
-#     }
     
     crit       <- sum(abs(lambda_buy-lambda_buy.next)) +             
-                  sum(abs(lambda_sell-lambda_sell.next)) +
-                  sum(abs(gamma-gamma.next)) +               
-                  sum(abs(delta-delta.next))                 
-
-    if(is.na(crit))
-    {
-      # browser()
-    }
+      sum(abs(lambda_sell-lambda_sell.next)) +
+      sum(abs(gamma-gamma.next)) +               
+      sum(abs(delta-delta.next))                 
     
     print(paste("Iteration:",iter," Crit:", crit, "LLK:", llk))  
-    if(crit<tol)                                             
+    
+    if(is.na(crit))                                             
+    {                                                      
+      AIC    <- NA
+      BIC    <- NA
+      return(list(lambda_buy=lambda_buy,lambda_sell=lambda_sell,gamma=gamma,delta=delta,    
+                  mllk=-llk,AIC=AIC,BIC=BIC))                     
+    }                                                      
+    else if(crit<tol)                                             
     {                                                      
       np     <- m*m+m-1                                      
       AIC    <- -2*(llk-np)                                  
-      BIC    <- -2*llk+np*log(t)                             
+      BIC    <- -2*llk+np*log(n)                             
       return(list(lambda_buy=lambda_buy,lambda_sell=lambda_sell,gamma=gamma,delta=delta,    
                   mllk=-llk,AIC=AIC,BIC=BIC))                     
     }                                                      
     lambda_buy  <- lambda_buy.next                               
     lambda_sell <- lambda_sell.next                               
-    gamma       <- gamma.next                                 
-    delta       <- delta.next                                
+    gamma      <- gamma.next                                 
+    delta      <- delta.next                                
   }                                                        
   print(paste("No convergence after",maxiter,"iterations"))  
   NA                                                         
-}          
+}                                                           
 
 # ---- state decoding ----
 

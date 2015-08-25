@@ -70,6 +70,10 @@ epsilon = (V - alpha * mu)/2 #arrival rate of uninformed trader
 
 trades = generate.trades.sim(n, alpha, delta, epsilon, mu)
 ```
+```{r echo=FALSE}
+trueStates = trades[,c("States"),drop=FALSE]
+trades = trades[,c("Buckets","Buy", "Sell"),drop=TRUE]
+```
 
 The parameters are therefore as follows:
 
@@ -230,13 +234,13 @@ detach(clustersDf)
 #Fit HMM to data given inital values
 
 ```{r cache=FALSE, echo=FALSE}
-source('../code/A3.R')
+source('../code/hmmBivPois.R')
 ```
 Run for multiple values of $m$ and outline model selection process via AIC and BIC.
 
 TODO: m=3 should be giving us lowest AIC and BIC, probably still a bug in the code.
 
-```{r cache=FALSE, echo=FALSE, results='hide'}
+```{r cache=TRUE, echo=FALSE, results='hide'}
 
 runEM <- function (lambda_buy, lambda_sell, trades) {
   m_buy = length(lambda_buy)
@@ -259,8 +263,8 @@ model = runEM(lambda_buy, lambda_sell, trades)
 m1 = runEM(mean(trades$Buy), mean(trades$Sell), trades)
 m2 = runEM(c(20,40), c(20,40), trades)
 m3 = model
-```
-```{r}
+
+# Getting NaNs with m=4
 # m4 = runEM(c(10,20,30,40), c(10,20,30,40), trades)
 ```
 
@@ -280,7 +284,7 @@ ggplot(data=df_melt, aes(x = m, y = value, colour=variable)) +
 Now we present the fitted values for our chosen model, that of $m=3$:
 
 ```{r, echo=FALSE, results='asis'}
-xtable(model$gamma, caption = "Gamma: Fitted transition probability matrix")
+# xtable(model$gamma, caption = "Gamma: Fitted transition probability matrix")
 
 lambdaDf <- data.frame(
   `Lambda Buy`=model$lambda_buy, 
@@ -292,14 +296,56 @@ xtable(lambdaDf, caption = "Lambda Buy and Sell: Fitted arrival rates of informe
 
 #Local Decoding to accuracy of hidden state identification
 
-```{r eval=FALSE}
-states = bi.pois.HMM.local_decoding(testdata, mn, model$lambda_buy, model$lambda_sell,gamma)
-stateProbs = bi.pois.HMM.state_probs(testdata, mn, model$lambda_buy, model$lambda_sell,gamma)
-```
-
 On identification of the 'best' model, use this fitted model to run analysis of simulated data to see if expected hidden state matches the predetermined hidden state for all $t = 1 \dots T$ 
 
-Run correlation analysis gainst private information state buckets and VPIN values
+Because of the mathematical setup of the bivariate Poisson HMM, we are required to perform a translation step between the true states and the calculated states, somewhat analogously to the process we performed as part of the likelihood calculation whereby we translated parameters from natural to working representations. To illustrate let us look at two hypothetical $\lambda$ vectors for $m=3$:
+
+$$\lambda_b = \begin{pmatrix}
+\lambda_{b1} \\
+\lambda_{b2} \\
+\lambda_{b3} 
+\end{pmatrix} \qquad
+\lambda_s = \begin{pmatrix}
+\lambda_{s1} \\
+\lambda_{s2} \\
+\lambda_{s3} 
+\end{pmatrix}$$
+
+When formulating our parameter matrices, to represent the states in one dimension, we generate the Cartesian product of these parameters representing them with a unique indexer:
+
+```{r, echo=FALSE, results='asis'}
+combinsDf = expand.grid(c("b1", "b2", "b3"), c("s1", "s2", "s3"))
+names(combinsDf) = c("Lambda Buy", "Lambda Sell")
+xtable(combinsDf)
+```
+
+In order to interprete the decoded states calculated by the HMM our remaining task is to translate the estimated 'working' state index to the 'natural' state index. When generating our simulated data we apply arbitrary state labels to each of the generated obvservations whereby:
+
+- 1: No news state
+- 2: Bad news state
+- 3: Good news state
+
+With these labels applied, we can output the simulated true state values:
+
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+mn <- length(model$lambda_buy) * length(model$lambda_sell)
+states = bi.pois.HMM.local_decoding(cbind(trades$Buy,trades$Sell), mn, model$lambda_buy, model$lambda_sell,model$gamma)
+
+statesDf = data.frame(Buckets=trades$Buckets, `True States`=trueStates, `Decoded States`=states)
+#translate states
+statesDf$Decoded.States[statesDf$Decoded.States == 3] <- 2
+statesDf$Decoded.States[statesDf$Decoded.States == 4] <- 3
+
+df_melt = melt(statesDf, id.vars = 'Buckets')
+ggplot(df_melt, aes(x = Buckets, y = value)) + 
+    geom_line() + 
+    facet_wrap(~ variable, scales = 'free_y', ncol = 1)
+
+# stateProbs = bi.pois.HMM.state_probs(cbind(trades$Buy,trades$Sell), mn, model$lambda_buy, model$lambda_sell,model$gamma)
+```
+
+
+#Run correlation analysis gainst private information state buckets and VPIN values
 
 #Prediction of subsequent states
 
