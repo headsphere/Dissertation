@@ -20,6 +20,16 @@ knitr::read_chunk('../code/VPIN-Sim.R')
 ```
 
 \newpage
+\section*{Data Loading and Cleansing of NYSE TAQ Data}
+
+```{r cache=FALSE, echo=FALSE}
+knitr::read_chunk('../code/TAQ-Load-SPY.R')
+```
+
+```{r taq.load, eval=FALSE}
+```
+
+\newpage
 \section*{Jump method to Identify Number of Clusters using K-Means}
 
 ```{r cache=FALSE, echo=FALSE}

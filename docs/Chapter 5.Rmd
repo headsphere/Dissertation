@@ -1,1 +1,98 @@
 \chapter{Empirical Data Analysis}
+```{r}
+library(ggplot2)
+library(reshape2)
+library(xts)
+```
+
+
+```{r}
+deser = readRDS("../data/SPY_BuysSells.RDS")
+n <- length(deser[,1])
+trades = data.frame(Buckets=seq(1:n), Buy=coredata(deser)[,2], Sell=coredata(deser)[,3])
+
+df_melt = melt(trades, id.vars = 'Buckets')
+
+```
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+ggplot(df_melt, aes(x = Buckets, y = value)) +
+  geom_line() +
+  facet_wrap(~ variable, scales = 'free_y', ncol = 1)
+
+ggplot(df_melt,aes(x=value, fill=variable)) + 
+  geom_density(alpha=0.25)
+
+```
+```{r}
+source('../code/jump.R')
+tradesMatrix <- as.matrix(cbind(trades$Buy, trades$Sell),ncol=2)
+colnames(tradesMatrix) <- c("buy", "sell")
+temp <- jump(tradesMatrix,y=c(1.5,2,2.5),rand=10,trace=F,plotjumps=FALSE)
+
+cl <- kmeans(tradesMatrix, 3)
+trades$cluster=factor(cl$cluster)
+centers=as.data.frame(cl$centers)
+
+```
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+ggplot(data=trades, aes(x=Buy, y=Sell, color=cluster )) +
+  geom_point() +
+  geom_point(data=centers, aes(x=buy,y=sell, color="Center")) +
+  geom_point(data=centers, aes(x=buy,y=sell, color="Center"), size=52, alpha=.3, show_guide=FALSE)
+```
+
+```{r}
+clustersDf = data.frame(cbind(cl$centers, cl$size))
+names(clustersDf) = c("Buy", "Sell", "Cluster Size")
+
+attach(clustersDf)
+ordered = clustersDf[order(-`Cluster Size`),]
+epsilonBuy = ordered$Buy[1]
+epsilonSell = ordered$Sell[1]
+ordered = clustersDf[order(-Buy),]
+lambdaBuy2 = ordered$Buy[1]
+muBuy = lambdaBuy2 - epsilonBuy
+ordered = clustersDf[order(-Sell),]
+lambdaSell2 = ordered$Sell[1]
+muSell = lambdaSell2 - epsilonSell
+
+```
+```{r}
+source('../code/hmmBivPois.R')
+
+runEM <- function (lambda_buy, lambda_sell, trades) {
+  m_buy = length(lambda_buy)
+  m_sell = length(lambda_sell)
+  mn <- m_buy * m_sell
+  delta_buy = matrix(rep(1, mn), ncol = mn)
+  delta_buy = delta_buy/apply(delta_buy, 1, sum)
+  gamma <- matrix(rep(1,mn), nrow = mn, ncol = mn, byrow = TRUE)
+  gamma = gamma/apply(gamma,1,sum)
+  model <- bi.pois.HMM.EM(cbind(trades$Buy,trades$Sell),m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta_buy)
+}
+lambda_buy = c(epsilonBuy, epsilonBuy + muBuy, epsilonBuy)
+lambda_sell = c(epsilonSell,epsilonSell, epsilonSell + muSell)
+
+model = runEM(lambda_buy, lambda_sell, trades)
+m1 = runEM(mean(trades$Buy), mean(trades$Sell), trades)
+m2 = runEM(c(20,40), c(20,40), trades)
+
+lambdaDf <- data.frame(
+  `Lambda Buy Hat`=model$lambda_buy,
+  `Lambda Sell Hat`=model$lambda_sell
+)
+
+mn <- length(model$lambda_buy) * length(model$lambda_sell)
+states = bi.pois.HMM.local_decoding(cbind(trades$Buy,trades$Sell), mn, model$lambda_buy, model$lambda_sell,model$gamma)
+
+statesDf = data.frame(Buckets=trades$Buckets, `Decoded States`=states)
+
+```
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+df_melt = melt(statesDf, id.vars = 'Buckets')
+ggplot(df_melt, aes(x = Buckets, y = value)) +
+  geom_step() +
+  facet_wrap(~ variable, scales = 'free_y', ncol = 1)
+
+```
+

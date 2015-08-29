@@ -287,12 +287,38 @@ Now we present the fitted values for our chosen model, that of $m=3$:
 # xtable(model$gamma, caption = "Gamma: Fitted transition probability matrix")
 
 lambdaDf <- data.frame(
-  `Lambda Buy`=model$lambda_buy, 
-  `Lambda Sell`=model$lambda_sell
+  `Lambda Buy Hat`=model$lambda_buy, 
+  `Lambda Sell Hat`=model$lambda_sell
   )
 
 xtable(lambdaDf, caption = "Lambda Buy and Sell: Fitted arrival rates of informed and uninformed traders")
 ```
+
+
+Which as can be seen below, appear to be very close to the original parameters of the simulated data, thereby demonstrating to us the effectiveness of the HMM in estimating model parameters.^[A more thorough analysis would involve bootstrapping these parameter estimates in order to generate confidence intervals.]
+
+$$\lambda_b = 
+\begin{pmatrix}
+  \epsilon_b \\
+  \epsilon_b + \mu_b \\
+  \epsilon_b
+\end{pmatrix} = 
+\begin{pmatrix}
+  `r epsilon` \\
+  `r epsilon + mu` \\
+  `r epsilon`
+\end{pmatrix} \qquad
+\lambda_s = 
+\begin{pmatrix}
+  \epsilon_s \\
+  \epsilon_s \\
+  \epsilon_s + \mu_s 
+\end{pmatrix}= 
+\begin{pmatrix}
+  `r epsilon` \\
+  `r epsilon` \\
+  `r epsilon + mu`
+\end{pmatrix}$$
 
 #Local Decoding to accuracy of hidden state identification
 
@@ -327,26 +353,45 @@ In order to interprete the decoded states calculated by the HMM our remaining ta
 
 With these labels applied, we can output the simulated true state values:
 
-```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE}
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Untranslated decoded states", warning=FALSE}
 mn <- length(model$lambda_buy) * length(model$lambda_sell)
 states = bi.pois.HMM.local_decoding(cbind(trades$Buy,trades$Sell), mn, model$lambda_buy, model$lambda_sell,model$gamma)
 
 statesDf = data.frame(Buckets=trades$Buckets, `True States`=trueStates, `Decoded States`=states)
+
+df_melt = melt(statesDf, id.vars = 'Buckets')
+ggplot(df_melt, aes(x = Buckets, y = value)) + 
+    geom_step() +
+    facet_wrap(~ variable, scales = 'free_y', ncol = 1)
+```
+
+By examining the contrast between the untranslated decoded states and the true states we can easily interpret the following translation scheme:
+
+- Working State 1 $\Rightarrow$ Natural State 1
+- Working State 4 $\Rightarrow$ Natural State 3
+- Working State 3 $\Rightarrow$ Natural State 2
+
+And after applying this translation to the decoded states, we see that the decoded states match the true states with 100% accuracy:
+
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Translated decoded states"}
 #translate states
 statesDf$Decoded.States[statesDf$Decoded.States == 3] <- 2
 statesDf$Decoded.States[statesDf$Decoded.States == 4] <- 3
 
 df_melt = melt(statesDf, id.vars = 'Buckets')
 ggplot(df_melt, aes(x = Buckets, y = value)) + 
-    geom_line() + 
+    geom_step() +
     facet_wrap(~ variable, scales = 'free_y', ncol = 1)
-
-# stateProbs = bi.pois.HMM.state_probs(cbind(trades$Buy,trades$Sell), mn, model$lambda_buy, model$lambda_sell,model$gamma)
 ```
 
-
 #Run correlation analysis gainst private information state buckets and VPIN values
+
+\begin{figure*}[h]
+  \includegraphics{images/vpin-sim}
+\end{figure*}
+
 
 #Prediction of subsequent states
 
 Run prediction against cross-validation set and potentially hint at Market Maker implications
+
