@@ -6,7 +6,7 @@
 knitr::read_chunk('../code/hmmBivPois.R')
 ```
 
-```{r bi.pois.HMM.EM}
+```{r bi.pois.HMM.EM, eval=FALSE}
 ```
 
 \newpage
@@ -16,7 +16,7 @@ knitr::read_chunk('../code/hmmBivPois.R')
 knitr::read_chunk('../code/VPIN-Sim.R')
 ```
 
-```{r vpin.sim}
+```{r vpin.sim, eval=FALSE}
 ```
 
 \newpage
@@ -30,11 +30,22 @@ knitr::read_chunk('../code/TAQ-Load-SPY.R')
 ```
 
 \newpage
+\section*{Technique to calculate VPIN from Time Bars}
+
+```{r cache=FALSE, echo=FALSE}
+knitr::read_chunk('../code/VPIN-Timebars.R')
+```
+
+```{r vpin.timebars, eval=FALSE}
+```
+
+\newpage
 \section*{Jump method to Identify Number of Clusters using K-Means}
 
 ```{r cache=FALSE, echo=FALSE}
 knitr::read_chunk('../code/jump.R')
 ```
 
-```{r jump}
+```{r jump, eval=FALSE}
 ```
+

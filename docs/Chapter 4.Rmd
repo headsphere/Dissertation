@@ -108,7 +108,7 @@ temp <- jump(tradesMatrix,y=c(1.5,2,2.5),rand=10,trace=F,plotjumps=TRUE)
 \newpage
 With the optimal number of clusters identified we can now proceed with the k-means analysis on the data and thereby visualise the clusters:
 
-```{r results='hide'}
+```{r echo=FALSE, results='hide'}
 cl <- kmeans(tradesMatrix, 3)
 ```
 
@@ -316,7 +316,7 @@ $$\lambda_b =
   `r epsilon + mu`
 \end{pmatrix}$$
 
-#Local Decoding to accuracy of hidden state identification
+#Local Decoding for Hidden State Identification
 
 On identification of the 'best' model, use this fitted model to run analysis of simulated data to see if expected hidden state matches the predetermined hidden state for all $t = 1 \dots T$ 
 
@@ -382,16 +382,76 @@ ggplot(df_melt, aes(x = Buckets, y = value)) +
 
 \newpage
 
-#Run correlation analysis gainst private information state buckets and VPIN values
+#Analyse Relationship Between Hidden States and VPIN
 
+The final step in our analysis is to make inferences about the rleationship between these decoded hidden states and the calculated VPIN metric. The hypothesis we are examining is whether there is a strong relationship between high VPIN values and private information-based trading. We challenge we face however is determining exactly what we are comparing.
 
+First we briefly repeat how VPIN is calculated. Trading activity is typically measured in time bars, that is a summary of the tick-by-tick activity within a particular time period, e.g. seconds, minutes, hours etc. As part of our simulation analysis up to this point we have created time series showing generated buys and sells aggregated by time bars. As explained in the introduction, due to the difficulties of classifying trading activity as either buy or sell in a high-frequency context, trade data is spliced up into volume bars and these bars are then probabilistically allocated as buys or sells by examining the price differentials within those volume bars. Once the probabilistic buy and sell amounts have been calculated per volume bar, the trading imbalances and hence the VPIN can be calculated. The missing piece of the analysis puzzle is hence how to associate the decoded hidden state of a time bar with the VPIN value of the volume bar. The following is our attempt to define that linkage. ^[The procedure is an extension of the algorithm found in Appendix 1.]
 
-\begin{figure*}[h]
+\begin{figure*}
   \includegraphics{images/vpin-sim}
+  \label{fig:vpin-sim}
 \end{figure*}
 
+Table \ref{fig:vpin-sim} demonstrates a simple example of the process by which we translate from time bars to volume bars. The first table shows a simulated realisation of five time bars. Each bar has a buy and sell value and a decoded state associated with that time bar. In our example we assume that the size of each volume bar is $V=10$. We expand each time bar up into the total number of trades per bar e.g. timebar 1 is split into 3 entries and timebar 2 is split into 6 entries. We continue this for all the time bars. Once all the time bars have been expanded out we group these entries up into volume bars all equally sized at $V$.^[The R code used to implement this translation can be found in Appendix 2.]
 
-#Prediction of subsequent states
+In the volume bar schematic, the relative sizes of the bars are all to scale and indicate that as time progresses (left to right) and trading activity increases, the number of volume bars required to represent the time bars increases. The amount of information in each bar remains constant and hence they are directly comparable with each other.
 
-Run prediction against cross-validation set and potentially hint at Market Maker implications
+Each time bar that composes the volume bars has an associated time bar state. What we need to do is decide what is the most likely hidden state for the volume bar. To do this we determine the mode of all the states in the volume bar. For example volume bar 1, state 2 is the most frequent state therefore 2 becomes the volume bar state.
 
+The next step is to calculate the probabilistic buy and sell amounts for each volume bar. Because the input to this translation process is in fact signed order flow data, we don't need to infer the trade directions based off the price differentials as in the original VPIN algorithm. Instead we simply take a weighted average of the constituent time bars' buy and sell values. For example because volume bar 1 is composed of 30% from time bar 1, 60% from time bar 2, and 10% from time bar 3, we evaluate volume bar 1's buy and sell amounts as follows:
+
+\begin{align}
+  \begin{aligned}\nonumber
+  V_{b1} &= 0.3 \times T_{b1} + 0.6 \times T_{b2} + 0.1 \times T_{b3}\\
+         &= 0.3 \times 1 + 0.6 \times 2 + 0.1 \times 2\\
+         &= 1.7
+  \end{aligned}
+\end{align}
+
+\begin{align}
+  \begin{aligned}\nonumber
+  V_{s1} &= 0.3 \times T_{s1} + 0.6 \times T_{s2} + 0.1 \times T_{s3}\\
+         &= 0.3 \times 2 + 0.6 \times 4 + 0.1 \times 5\\
+         &= 3.5
+  \end{aligned}
+\end{align}
+
+We then take the absolute difference between these two buy and sell values and divide them by $V$ to get that volume bar's VPIN value:
+
+$$VPIN_{\tau} = \frac{| V_{b\tau} - V_{s\tau }|}{V}$$
+
+\newpage
+
+A small sample of the generated volume bars from the simulated data is shown below: 
+
+```{r, echo=FALSE, results='hide', warning=FALSE, cache=TRUE}
+source('../code/VPIN-Timebars.R')
+trades = generate.trades.sim(n, alpha, delta, mu, epsilon) 
+trades = data.frame(trades,TimeBar=rep(as.POSIXct(NA,"",tz = "GMT"),n))
+volBars =  GenerateVolBars(trades, n)
+```
+
+```{r, echo=FALSE, results='asis'}
+start = which(volBars$VPIN > 0)[1]
+xtable(subset(volBars[start:(start+5),], select=-c(TimeStart,VolBar)))
+```
+
+A simple visual exploration of the difference in means between the identified states is shown below. Visually we can see that there is a large difference in the VPIN values between state 1, and states 2 and 3. We can interprete that as telling us the no-news event appears to be correlated with low values of VPIN, while the private information states tend to be associated with higher VPIN values.
+
+```{r, fig.width = 10, fig.height = 4, fig.fullwidth = FALSE, echo=FALSE, fig.cap="Box plots of VPIN values against decoded HMM states"}
+df = data.frame(VolBar=volBars$VolBar, 
+                State=factor(volBars$State), 
+                VPIN=as.numeric(volBars$VPIN))
+melt = melt(df, id.vars = c('VolBar', 'State'))
+ggplot(melt, aes(State, value, fill=State)) + geom_boxplot()
+```
+
+To further test the strength of this relationship we conduct multiple linear regression of VPIN against State which give us the following results (we define state 1, 2 and 3 as dummy variables with state 1 set as the baseline):
+```{r, echo=FALSE, results='asis'}
+model.lm = lm(VPIN ~ State, data = df)
+xtable(model.lm)
+rsq <- summary(model.lm)$r.squared
+```
+
+The results of the regression indicate to us that there does indeed appear to be a very strong (p << 0.01) indication that VPIN values associated with the no-news state are going to be significantly lower than VPIN values from the private information states.
