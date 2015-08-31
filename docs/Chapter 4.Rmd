@@ -425,7 +425,7 @@ $$VPIN_{\tau} = \frac{| V_{b\tau} - V_{s\tau }|}{V}$$
 
 A small sample of the generated volume bars from the simulated data is shown below: 
 
-```{r, echo=FALSE, results='hide', warning=FALSE, cache=TRUE}
+```{r, echo=FALSE, results='hide', warning=FALSE, cache=TRUE, message=FALSE}
 source('../code/VPIN-Timebars.R')
 trades = generate.trades.sim(n, alpha, delta, mu, epsilon) 
 trades = data.frame(trades,TimeBar=rep(as.POSIXct(NA,"",tz = "GMT"),n))
