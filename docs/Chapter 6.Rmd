@@ -1,1 +1,17 @@
 \chapter{Conclusion and Further Work}
+
+#Results
+
+The goal of this dissertation was to analyse the relationship between the hidden market states that could be identified over the course of a trading day, and the VPIN metric that purports to represent those states. VPIN assumes an underlying theoretical model based off the presence of informed and uninformed traders and their relative arrival rates to the market. We hypothesised that the differing arrival rates could represent a variety of different market states, thereby making the observed data a mixture of several component distributions.
+
+We showed as part of a simulation study how if data were generated according to that theoretical model then we could indeed identify the hidden market states, and additionally show that these private information states correlated strongly with a higher VPIN value.
+
+When analysing the empirical data from a known liquidity crisis, the results were not as clear cut as in the simulation study. First we could not identify any clear component distributions. Our cluster analysis furthermore could not identify any logical groupings of trading behaviour. When translating our hidden states from time bars to volume bars we did seem to find a difference between the hidden states, however this was likely to be a spurious result due to the fact that the underlying data did not appear to conform to our theoretical model. 
+
+There are however a variety of avenues that could still be explored:
+
+- In the original work by @Easley2012 the data they used use E-Mini S&P 500 futures contract. The reason why they chose this instrument was because as they defined an information event quite broadly, trading strategies such as hedging, would come under that umbrella. It is possible therefore that the E-Mini trade data more accurately represented the underlying theoretical model. Running the same analysis we conducted here with the E-Mini data from the Chicago Mercantile Exchange could prove more fruitful.
+
+- The process by which we inferred buys and sells using the Lee & Ready methodology and then used a weighted average of these inferred values to create synthesised volume bars could have been a problematic approach. It is a possibility that too much 'information' was lost along the translation process. Future analysis could involve fitting an HMM directly off the bulk classified buys and sells themselves.  
+
+- From an implementation point of view, there were issues with numerical instability and underflow when estimating models with a larger number of states than just three. Further work could involve employing a package such as depmixs4^[https://cran.r-project.org/web/packages/depmixS4/vignettes/depmixS4.pdf] in order to see if these problems can be mitigated.

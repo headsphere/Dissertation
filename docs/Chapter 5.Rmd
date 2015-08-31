@@ -11,9 +11,9 @@ options(digits=3)
 
 #The Data
 
-In order to validate the assumptions of the preceeding chapters the next step was to run an empirical data analysis. The data we chose to analyse was the SPDR S&P 500 exchange-traded fund (ticker symbol SPY) as this one one of the financial products that was most adversely affected in the May 6 2010 Flash Crash. The reason why we analyse SPY instead of the E-Mini S&P 500 futures contracts as per @Easley2011 is due to the fact that the data we had available was NYSE TAQ, and the E-Mini data would only have been available from the Chicago Mercantile Exchange. It is our hope that SPY will be a suitable proxy for the E-Mini.
+In order to validate the assumptions of the preceding chapters the next step was to run an empirical data analysis. The data we chose to analyse was the SPDR S&P 500 exchange-traded fund (ticker symbol SPY) as this one one of the financial products that was most adversely affected in the May 6 2010 Flash Crash. The reason why we analyse SPY instead of the E-Mini S&P 500 futures contracts as per @Easley2011 is due to the fact that the data we had available was NYSE TAQ, and the E-Mini data would only have been available from the Chicago Mercantile Exchange. It is our hope that SPY will be a suitable proxy for the E-Mini.
 
-On downloading the data from the NYSE TAQ database for ticker SPY for the 6th of May 2010, we found we had 1,549,379 trades and 8,343,441 quotes in raw CSV format. For various reasons, raw trade and quote data contains numerous data errors [@Brownlees2006]. Therefore, the data is not suited for analysis right-away and data-cleaning is an essential step in dealing with tick-by-tick data. Trade cleanup involved removing zero prices, limiting the observations to a single exchange, filtering by sale condition, and merging any records with the same timestamp. This was then followed by quote cleanup procedure which was responsible for removing any errant values with abnormally large spreads and outliers where the mid-quote deviated by more than 25 median absolute deviations from a rolling centred median. Once the data were cleaned up the trades and quotes were matched up using the technique as outlined in @Vergote2005. Finally becuase the data from the exchange doesn't report the trade direction, we employed the @Lee1991 approach to inferring whether individual trades were buys or sells. 
+On downloading the data from the NYSE TAQ database for ticker SPY for the 6th of May 2010, we found we had 1,549,379 trades and 8,343,441 quotes in raw CSV format. For various reasons, raw trade and quote data contains numerous data errors [@Brownlees2006]. Therefore, the data is not suited for analysis right-away and data-cleaning is an essential step in dealing with tick-by-tick data. Trade clean-up involved removing zero prices, limiting the observations to a single exchange, filtering by sale condition, and merging any records with the same timestamp. This was then followed by quote clean-up procedure which was responsible for removing any errant values with abnormally large spreads and outliers where the mid-quote deviated by more than 25 median absolute deviations from a rolling centred median. Once the data were cleaned up, then the trades and quotes were matched up using the technique as outlined in @Vergote2005. Finally because the data from the exchange doesn't report the trade direction, we employed the @Lee1991 approach to inferring whether individual trades were buys or sells. 
 
 After this preprocessing, the consolidated trade and quote dataset now comprised of 791,173 entries, which by converting the data into one second time bars was then further compressed into 24,839 records, a dataset size that is much more tractable for in-memory analysis in R. The data are displayed visually in the following plots:
 
@@ -34,7 +34,7 @@ ggplot(df_melt, aes(x = Time, y = value, colour=variable)) +
 
 #Analysis Procedures
 
-A visual examination of the data show the clear downward spike in price, matching the known events that were known to happen between 2:32 and the subsequent 36 minutes. However there does not appear to be any untoward pattern in the number of buys and sells, apart from a marginal uptick in activity after the crash, nothing that seems out of character when compared to the rest of the trading day.
+A visual examination of the data show the clear downward spike in price, matching the known events that were known to happen between 2:32 and the subsequent 36 minutes. However there does not appear to be any untoward pattern in the number of buys and sells, apart from a marginal up-tick in activity after the crash, nothing that seems out of character when compared to the rest of the trading day.
 
 ```{r, fig.width = 10, fig.height = 4, fig.fullwidth = FALSE, echo=FALSE, fig.cap="Fitted density of inferred buys and sells (bandwidth=30, kernel=gaussian)"}
 trades = data.frame(Time=index(deser), Buy=coredata(deser)[,2], Sell=coredata(deser)[,3])
@@ -90,7 +90,7 @@ xtable(clustersDf, caption = "Cluster centroids and sizes")
 ```
 
 
-Given the centroids of the three fitted clusters (no matter how uninterpretable they may be) we repeat the analysis we conducted as part of the simulation study in order to identify inital starting values for the HMM EM estimation. Hence we can formulate the initial state parameter estimates:
+Given the centroids of the three fitted clusters (no matter how uninterpretable they may be) we repeat the analysis we conducted as part of the simulation study in order to identify initial starting values for the HMM EM estimation. Hence we can formulate the initial state parameter estimates:
 
 $$\lambda_b = \begin{pmatrix}
 \epsilon_b \\
@@ -179,7 +179,7 @@ xtable(subset(volBars[start:(start+5),], select=-c(TimeStart,VolBar)))
 ```
 
 \newpage
-To show the difference in the distributions between the identified states we show a boxplot of the data below Visually we can see that there appears to be a difference in the VPIN values between state 1, and states 3, 4 and 6. We can interprete that as telling us the no-news event appears to be correlated with low values of VPIN, while the private information states tend to be associated with higher VPIN values.
+To show the difference in the distributions between the identified states we show a boxplot of the data below Visually we can see that there appears to be a difference in the VPIN values between state 1, and states 3, 4 and 6. We can interpret that as telling us the no-news event appears to be correlated with low values of VPIN, while the private information states tend to be associated with higher VPIN values.
 
 ```{r, fig.width = 10, fig.height = 5, fig.fullwidth = FALSE, echo=FALSE, fig.cap="Box plots of VPIN values against decoded HMM states"}
 df = data.frame(VolBar=volBars$VolBar, 

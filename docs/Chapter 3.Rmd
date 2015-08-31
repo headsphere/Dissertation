@@ -142,7 +142,7 @@ On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPI
   \end{aligned}
 \end{align}
 
-We repeat the above iterative scheme a large number of times until we meet our convergence criteria. In this instance we repeat until the marginal improvement in the CDDL is less than $10^{-6}.$\marginnote{The R code for this algorithm can be found in appendix TODO}
+We repeat the above iterative scheme a large number of times until we meet our convergence criteria. In this instance we repeat until the marginal improvement in the CDDL is less than $10^{-6}.$\marginnote{The R code for this algorithm can be found in Appendix 2}
 
 The problem remains that without suitable starting values for the initial distribution $\boldsymbol{\delta}$, and the transition matrix $\boldsymbol{\Gamma}$, the EM algorithm may converge on local not global optima. Therefore a strategy for mitigating this problem is required. In the simulation study we outline our approach to solving this problem by way of estimation of trading motives via K-Means clustering
 
