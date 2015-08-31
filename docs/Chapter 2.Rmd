@@ -8,7 +8,7 @@ header-includes:
 
 # Independent Mixture Model
 
-This section will outline the derivation of the HMM for univariate poisson observed data. We will use a toy example in order to illustrate the derivation.
+This section will outline the derivation of the HMM for univariate Poisson observed data. We will use a toy example in order to illustrate the derivation.
 
 An independent mixture model consists of $m$ component distributions with probability functions $p_i$ for $i \in {1, ... , m}$ and a “mixing distribution”. The mixing is performed by a discrete random variable $C$:
 $$C =
@@ -17,12 +17,12 @@ $$C =
    \vdots   & \vdots \\
    i        & \text{with probability } \delta_i \\
    \vdots   & \vdots \\
-   m        & \text{with probability } \delta_m = \sum_{i=1}^{m-1} \delta_i
+   m        & \text{with probability } \delta_m = 1 - \sum_{i=1}^{m-1} \delta_i
   \end{cases}$$
 
 Thus $Pr(C=i)=\delta_i$ must obey $0 < \delta_i < 1$ and that  $\sum_{i=1}^m \delta_i = 1$
 
-For a discrete random variable X described by a mixture model consisting of $m$ components it holds that:
+For a discrete random variable X described by a mixture model consisting of $m$ components, it holds that:
 
 $$p(X) = \sum_{i=1}^m \delta_i p_i(X) \implies PR(X = x) = \sum_{i=1}^m Pr(X = x|C = i)$$
 
@@ -30,7 +30,7 @@ To estimate the parameters $\theta$ of the mixture distribution via ML estimatio
 
 $$L(\theta_1,...,\theta_m,\delta_1,...,\delta_m|x_1,...,x_n) = \prod_{j=1}^n \sum_{i=1}^m \delta_i p_i(x_j, \theta_i)$$
 
-For the example where $m = 2$ and the component distributions are poisson with parameters $\lambda_1$ and $\lambda_2$ the likelihood equation is as follows:
+For the example where $m = 2$ and the component distributions are Poisson with parameters $\lambda_1$ and $\lambda_2$ the likelihood equation is as follows:
 
 $$L(\lambda_1,\lambda_2,\delta_1,\delta_2 | x_1,...,x_n) = \prod_{j=1}^n \Bigg( \delta_1 \frac{\lambda_1^{x_j} e^{-\lambda_1}}{x_j !} + \delta_2 \frac{\lambda_2^{x_j} e^{-\lambda_2}}{x_j !} \Bigg)$$
 
@@ -48,7 +48,7 @@ x = c(d1,d2)
 
 This code generates a series of x values according to a mixture of two Poisson distributions with $\lambda_1=`r lambdas[1]`, \lambda_2=`r lambdas[2]`, \delta_1=`r deltas[1]`$ and $\delta_2=`r deltas[2]`$
 
-We can see from both the following plots of the time series and the kernel density estimates the data appears to conform to two separate distributions, or states, as it were:  
+We can see from both the following plots of the time series and the kernel density estimates, the data appears to conform to two separate distributions, or states, as it were:  
 
 ```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE,fig.cap="Time series of simulated Poisson mixture"}
 library(ggplot2)
@@ -59,20 +59,13 @@ ggplot(df_melt, aes(x = Time, y = value)) +
     geom_line()
 ```
 
-```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture"}
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture (bandwidth=30, ker- nel=gaussian)"}
 ggplot(df_melt,aes(x=x, fill=variable)) + geom_density(alpha=0.25)
 ```
 
-```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Time series of simulated Poisson mixture"}
-  # plot.ts(x, xlab = NULL, ylab = NULL)
-```
-```{r echo=FALSE, fig.fullwidth = FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture"}
-  # hist(x, breaks=30, freq = F, main=NULL, xlab = NULL, ylab = NULL)
-  # lines(density(x, na.rm = T, from = 0, to = max(x, na.rm = T)))
-```
+The kernel density estimates are generated with the Gaussian kernel and a bandwidth of `r round(bw.nrd0(x),2)`. The multimodal appearance eof the plot clearly shows that the data are overdispersed compared to a single Poisson, and instead appear to come from a mixture of two Poissons. 
 
-
-Before maximisiming the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$ and logit transforming $\delta$.
+Before minimising the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$ and logit transforming $\delta$.
 
 \begin{align}
  \begin{aligned}\label{eq:paramN2W}
@@ -102,13 +95,12 @@ and additionally $\delta_1 = 1 - \delta_2$
 
 ```{r eval=TRUE}
 invlogit <- function(tau) exp(tau)/(1+exp(tau))
-
 lambdas = exp(eta)
 delta2 = invlogit(tau)
 delta1 = 1 - delta2
 ```
 
-Now we have all the building blocks to maximise the negative log-likelihood for a two-state mixture distribution:
+Now we have all the building blocks to maximise the negative log-likelihood for a two-state mixture distribution
 
 ```{r warning=FALSE, cache=FALSE}
 f <- function(theta,data) {
@@ -121,26 +113,30 @@ f <- function(theta,data) {
   L = delta1*dpois(data,lambdas[1]) + delta2*dpois(data,lambdas[2])
   -sum(log(L))
 }
+```
 
-#use the 25% and 75%  quantiles of the data as a guess for lambdas
+Use the 25% and 75% quantiles of the data as a guess for lambdas:
+```{r}
 quantiles <- quantile(x)
 lambdaGuess = c(quantiles[2],quantiles[4]) 
+```
 
+We can now optimise using the R `nlm` package:
+```{r warning=FALSE}
 deltaGuess = 0.1
-
-# Optimize using nlm
 theta <- c(log(lambdaGuess), logit(deltaGuess))
 res = nlm(f, theta, data = x)
+```
 
-# Back transform results
+And back transform the results:
+```{r}
 lambda1Hat = exp(res$estimate[1])
 lambda2Hat = exp(res$estimate[2])
-
 delta2Hat = invlogit(res$estimate[3])
 delta1Hat = 1-delta2Hat
 ```
 
-Estimated values:
+Which provides us with the following estimated values:
 
 $$\boldsymbol{\lambda} = 
 \begin{pmatrix}
@@ -164,7 +160,7 @@ $$\boldsymbol{\delta} =
  `r delta2Hat`
 \end{pmatrix}$$
 
-The mixture distribution parameters appear to be estimated satisfactorily.
+The mixture distribution parameters appear to be estimated satisfactorily when compared with the true values from the simulated data.
 
 The next step is to introduce into the model a way of capturing the transition behaviour between the states over time.
 
@@ -172,7 +168,7 @@ The next step is to introduce into the model a way of capturing the transition b
 
 The independent mixture model is used to cater for the overdispersion noticed in some time series data. The second feature often found is that they exhibit serial dependece between the observations. This dependence is identified via the autocorrelation function of the data. To cater for this we model the dependence between the mixtures by introducing a Markov process. With this building block we will have completely defined the hidden Markov model. 
 
-If we define $\{C_t : t = 1,2, \dots T \}$ as the unobserved hidden states, and $\{X_t : t = 1,2, \dots T \}$ as the observed data points, we can say a hidden Markov is a dependent mixture where:
+If we define $\{C_t : t = 1,2, \dots T \}$ as the unobserved hidden states, and $\{X_t : t = 1,2, \dots T \}$ as the observed data points, and $X^{(t)}$ denotes the sequence of all R.V.s $X_i$ for $i = 1 \dots t$, we can say a hidden Markov is a dependent mixture where:
 
 $$Pr(C_t = i | C^{(t-1)}) = Pr(C_t = i | C_{t-1}), t = 2,3,\dots$$
 $$Pr(X_t = x | X^{(t-1)}, C^{(t)}) = Pr(X_t = x | C_t), t \in \mathbb{N}$$
@@ -224,7 +220,7 @@ We will often want to calculate the marginal distribution of $X$. This can be ac
  
 $\mathbf{u}(t)$ is the distribution of the hidden states, and $\mathbf{P}(x)$ is the state-dependent distribution of the observations. $\mathbf{u}(1)$ is defined as the initial distribution of the Markov chain.
 
-The $m \times m$ diagonal matrix of conditional probabilities ${P}(x)$ defined as:
+The $m \times m$ diagonal matrix of conditional probabilities $\mathbf{P}(x)$ defined as:
 $$\mathbf{P}(x) = \begin{pmatrix}
                    p_1(x) &        & 0 \\
                           & \ddots &   \\
@@ -262,7 +258,7 @@ $$\boldsymbol{\Gamma}(1) = \begin{pmatrix}
 
 $$\gamma_{ij}(t) = Pr(C_{t+1} = j | C_t = i)$$
 
-Because the Markov chain satisfies the Chapman-Kolmogorov equations we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ (where $\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
+Because the Markov chain satisfies the Chapman-Kolmogorov equations [@zucchini, p16] we can say that $\mathbf{u}(t) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1}$ (where $\boldsymbol{\Gamma}$ is shorthand for $\boldsymbol{\Gamma}(1)$) and hence it follows that: 
 
 \begin{equation} \label{eq:marginalNonStat}
   Pr(X_t = x) = \mathbf{u}(1) \boldsymbol{\Gamma}^{t-1} \mathbf{P}(x) \mathbf{1'}
@@ -274,7 +270,7 @@ If the Markov chain can be shown to be stationary with stationary distribution $
   Pr(X_t = x) = \boldsymbol{\delta} \mathbf{P}(x) \mathbf{1'}
 \end{equation}
 
-It can be shown that if the stationary distribution exists then $\boldsymbol{\delta}$ can be found using the following calculation:
+It can be shown that if the stationary distribution exists then $\boldsymbol{\delta}$ can be found using the following calculation [proved in @zucchini, p19]:
 
 \begin{equation} \label{eq:stationary}
   \boldsymbol{\delta} (\mathbf{I}_m - \boldsymbol{\Gamma} + \mathbf{U}) = \mathbf{1}
@@ -416,7 +412,7 @@ In addition to this scaling solution, we also introduce two parameter transforma
 
 - As shown in \eqref{eq:paramN2W} and \eqref{eq:paramW2N}, because the parameters $\lambda_i$ for a Poisson HMM are limited to be non-negative, we apply the log transformation to get the working parameters $\eta_i$, and then exponentiate them to obtain the natural parameters again.
 
-- Because the rows of the $\boldsymbol{\Gamma}$ matrix must all sum to one and the individual $\gamma_{ij}$ must all be non=-negative, we apply the following transformation. ^[For details see @zucchini [pp. 48-49]]
+- Because the rows of the $\boldsymbol{\Gamma}$ matrix must all sum to one and the individual $\gamma_{ij}$ must all be non-negative, we apply the following transformation. ^[For details see @zucchini [pp. 48-49]]
 
 \begin{align}
   \begin{aligned}\nonumber
