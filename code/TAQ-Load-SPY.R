@@ -1,5 +1,8 @@
 # ---- taq.load ----
 
+# Following instructions found in the highfrequency package manual
+# http://highfrequency.herokuapp.com
+
 library(zoo)
 library(xts)
 library(highfrequency)
