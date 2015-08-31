@@ -1,8 +1,4 @@
 # ---- jump ----
-
-#Thanks to Gareth M James for making this code available
-#http://www-bcf.usc.edu/~gareth/research/jump
-
 jump <-
   function(data=NULL,K=10,y=NULL,plotjumps=T,rand=10,fits=NULL,B=0,dist=NULL,trace=F){
     if (!is.null(data)){

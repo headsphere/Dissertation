@@ -1,6 +1,8 @@
 \chapter{Appendix 2: R Code Used in this Project}
 
-\section*{EM Estimation of Bivariate Poisson HMM Parameters}
+#EM Estimation of Bivariate Poisson HMM Parameters
+
+This code is adapted from that found in @zucchini to support bivariate Poisson models
 
 ```{r cache=FALSE, echo=FALSE}
 knitr::read_chunk('../code/hmmBivPois.R')
@@ -10,7 +12,17 @@ knitr::read_chunk('../code/hmmBivPois.R')
 ```
 
 \newpage
-\section*{Monte-Carlo Simulation of Volume Buckets}
+
+#Calculation of Forward and Backward Probabilities
+
+This code is adapted from that found in @zucchini to support bivariate Poisson models
+
+```{r bi.pois.HMM.lalphabeta, eval=FALSE}
+```
+
+\newpage
+
+#Monte-Carlo Simulation of Volume Buckets
 
 ```{r cache=FALSE, echo=FALSE}
 knitr::read_chunk('../code/VPIN-Sim.R')
@@ -20,7 +32,12 @@ knitr::read_chunk('../code/VPIN-Sim.R')
 ```
 
 \newpage
-\section*{Data Loading and Cleansing of NYSE TAQ Data}
+
+#Data Loading and Cleansing of NYSE TAQ Data
+
+Following instructions found in the highfrequency package manual
+
+http://highfrequency.herokuapp.com
 
 ```{r cache=FALSE, echo=FALSE}
 knitr::read_chunk('../code/TAQ-Load-SPY.R')
@@ -30,7 +47,8 @@ knitr::read_chunk('../code/TAQ-Load-SPY.R')
 ```
 
 \newpage
-\section*{Technique to calculate VPIN from Time Bars}
+
+#Technique to calculate VPIN from Time Bars
 
 ```{r cache=FALSE, echo=FALSE}
 knitr::read_chunk('../code/VPIN-Timebars.R')
@@ -40,7 +58,12 @@ knitr::read_chunk('../code/VPIN-Timebars.R')
 ```
 
 \newpage
-\section*{Jump method to Identify Number of Clusters using K-Means}
+
+#Jump method to Identify Number of Clusters using K-Means
+
+Thanks to Gareth M James for making this code available
+
+http://www-bcf.usc.edu/~gareth/research/jump
 
 ```{r cache=FALSE, echo=FALSE}
 knitr::read_chunk('../code/jump.R')

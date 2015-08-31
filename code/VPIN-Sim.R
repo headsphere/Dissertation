@@ -1,11 +1,5 @@
 # ---- vpin.sim ----
-
 generate.trades.sim <- function (n, alpha, delta, epsilon, mu) {
-  # numSim = 1000
-  # Vpin = numeric(numSim)
-  # s = 1
-  # while(s < numSim){
-
   Vbuy = numeric(n) #buy volume buckets
   Vsell = numeric(n) #sell volume buckets
   TrueStates = numeric(n) #sell volume buckets
@@ -37,13 +31,7 @@ generate.trades.sim <- function (n, alpha, delta, epsilon, mu) {
     }
     j = j + 1
   }
-  #   Vpin[s] = sum(abs(Vbuy - Vsell)) / sum(Vbuy + Vsell)
-  #   
-  #   s = s + 1
-  # }
-  # meanVpin = sum(Vpin)/numSim
-  # varVpin =  sum(Vpin^2)/(numSim - 1) - (sum(Vpin)/(numSim * (numSim - 1)))^2
-    return(data.frame(Buckets = 1:n, Buy=Vbuy, Sell=Vsell, States = TrueStates))
+  return(data.frame(Buckets = 1:n, Buy=Vbuy, Sell=Vsell, States = TrueStates))
 }
 
 # ---- vpin.sim.test ----

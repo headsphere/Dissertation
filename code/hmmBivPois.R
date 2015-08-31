@@ -50,7 +50,6 @@ PMatAll <- function(x, lambda_buy, lambda_sell) {
 # ---- bi.pois.HMM.lalphabeta ----
 bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)  
 {                                                           
-  # browser()
   if(is.null(delta))delta<-solve(t(diag(m)-gamma+1),rep(1,m))   
   n          <- dim(x)[1]
   lalpha     <- lbeta<-matrix(NA,m,n)                       
@@ -87,7 +86,6 @@ bi.pois.HMM.lalphabeta<-function(x,m,lambda_buy,lambda_sell,gamma,delta=NULL)
 bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,            
                            maxiter=1000,tol=1e-6,...)         
 {                                                          
-  # browser()
   n                <- dim(x)[1]   # num of observations
   m                <- m_buy * m_sell
   lambda_buy.next  <- lambda_buy
@@ -109,14 +107,12 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
   
   for (iter in 1:maxiter)                                    
   {                                                        
-    # if(iter==80) browser()
     lallprobs    <- log(PMatAll(x, lambda_buy, lambda_sell))
     fb  <-  bi.pois.HMM.lalphabeta(x,m,lambda_buy,lambda_sell,gamma,delta=delta)   
     la  <-  fb$la                                            
     lb  <-  fb$lb                                            
     c   <-  max(la[,n])                                      
     llk <- c+log(sum(exp(la[,n]-c)))                         
-    # browser()
     for (j in 1:m)                                           
     {                                                       
       for (k in 1:m)                                         
@@ -126,15 +122,11 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
       }                                                      
     }                                                       
     gamma.next <- gamma.next/apply(gamma.next,1,sum)         
-    # print(gamma.next)
-    
     uhat <- function (j,t) {
       exp(la[j,t]+lb[j,t]-llk)
     }
-    
     buy              <- x[,1]
     sell             <- x[,2]
-    
     #calculate lambda_buy_i
     for (i in 1:m_buy)               
     {
@@ -149,7 +141,6 @@ bi.pois.HMM.EM <- function(x,m_buy,m_sell,lambda_buy,lambda_sell,gamma,delta,
       
       lambda_buy.next[i] <- numerator / denominator            
     }
-    
     #calculate lambda_sell_j
     for (j in 1:m_sell)                                         
     {
