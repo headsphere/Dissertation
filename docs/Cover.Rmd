@@ -8,16 +8,10 @@ csl: harvard1.csl
 ---
 ```{r setup,echo=FALSE,message=FALSE,cache=FALSE,include=TRUE,warning=FALSE}
 # Its a good idea to start any rmarkdown document with a block like this one to set knit defaults, setup the bibliography, and so forth.
-library(knitcitations)
 library(knitr)
 library(xtable)
 library(ggplot2)
 library(pander)
-cite_options(
-              citation_format = "pandoc",
-						 style="citation"
-             )
-
 options(xtable.comment = FALSE)
 options(xtable.booktabs = TRUE)
 options(digits = 3)
