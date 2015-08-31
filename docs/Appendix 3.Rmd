@@ -1,0 +1,46 @@
+\chapter{Appendix 3: Proof of the Bivariate Poisson CDDL}
+
+As shown in \eqref{eq:cddlVPIN} the CDDL of the bivariate Poisson EM problem is stated as:
+
+\begin{align}
+  \begin{aligned}\nonumber
+    \text{log} \Big ( Pr(\mathbf{x}^{(T)}, \mathbf{c}^{(T)}) \Big ) &  
+    = \sum_{i=1}^m \sum_{j=1}^n u_{i,j}(1) \text{log } \delta_{i,j}
+    + \sum_{i,k=1}^m \sum_{j,l=1}^n \Bigg ( \sum_{t=2}^T v_{i,j;k,l}(t)   \Bigg ) \text{log } \gamma_{i,j;k,l}(t) 
+    + \sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } p_{i,j}(x_t)
+  \end{aligned}
+\end{align}
+
+The third term is the one we wish to maximise:
+
+$$\sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } p_{i,j}(x_t)$$
+
+Where:
+
+$$p_{i,j}(x_t) = e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$$
+
+Which means we must maximise the following equation with respect to each of the  $\lambda_{b;i}$ and $\lambda_{s;j}$ 
+
+$$\sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$$
+
+Firstly with respect to $\lambda_{b;i}$:
+
+$$\frac{\partial }{\partial \lambda_{b;i}} \left(\sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \text{log } e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !} \right)$$
+
+$$= \frac{\partial }{\partial \lambda_{b;i}} \left(\sum_{i=1}^m \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \left\{ -(\lambda_{b;i} + \lambda_{s;j}) + b_t \text{log } \lambda_{b;i} -b_t! + s_t \text{log } \lambda_{s;i} -s_t! \right\} \right)$$
+
+$$= \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) \left\{ -1 + \frac{b_t}{\lambda_{b;i}} \right\} $$
+
+Which we now solve for 0:
+
+$$\sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t)  = \frac{1}{\lambda_{b;i}} \sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) b_t$$
+
+Hence giving us an expression for $\hat{\lambda}_{b;i}$:
+
+$$\hat{\lambda}_{b;i} = \frac{\sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t) b_t}{\sum_{j=1}^n \sum_{t=1}^T u_{i,j}(t)}$$
+
+Following the same steps for $\hat{\lambda}_{s;j}$ gives us:
+
+$$\hat{\lambda}_{s;j} = \frac{\sum_{i=1}^m \sum_{t=1}^T u_{i,j}(t) s_t}{\sum_{i=1}^m \sum_{t=1}^T u_{i,j}(t)}$$
+
+

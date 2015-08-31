@@ -45,6 +45,9 @@ options(digits = 3)
 ```{r child = 'Appendix 2.Rmd'}
 ```
 \newpage
+```{r child = 'Appendix 3.Rmd'}
+```
+\newpage
 ```{r child = 'References.Rmd'}
 ```
 \newpage

@@ -130,7 +130,7 @@ Again, following the univariate examples \eqref{eq:uHat} and \eqref{eq:vHat} we 
 
 ## M Step
 
-On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPIN} with respect to the four sets of parameters, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$, $\lambda_{b;i}$ and $\lambda_{s;j}$. The state dependent distribution $p_{i,j}(x_t)$ as stated here \eqref{eq:bivarPois} is the independent bivariate Poisson distribution:  $e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$ \marginnote{For proof of this maximisation see appendix TODO}
+On completing the E step is complete, we now maximise the CDDL \eqref{eq:cddlVPIN} with respect to the four sets of parameters, $\boldsymbol{\delta}$, $\boldsymbol{\Gamma}$, $\lambda_{b;i}$ and $\lambda_{s;j}$. The state dependent distribution $p_{i,j}(x_t)$ as stated here \eqref{eq:bivarPois} is the independent bivariate Poisson distribution:  $e^{- \lambda_{b;i}} \frac{(\lambda_{b;i})^{b_t}}{b_t !} e^{- \lambda_{s;j}} \frac{(\lambda_{s;j})^{s_t}}{s_t !}$ \marginnote{For proof of this maximisation see Appendix 3}
 
 \begin{align}
   \begin{aligned}\nonumber
