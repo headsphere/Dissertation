@@ -59,11 +59,11 @@ ggplot(df_melt, aes(x = Time, y = value)) +
     geom_line()
 ```
 
-```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture (bandwidth=30, ker- nel=gaussian)"}
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, echo=FALSE, fig.cap="Kernel density estimate of simulated Poisson mixture (bandwidth=30, kernel=gaussian)"}
 ggplot(df_melt,aes(x=x, fill=variable)) + geom_density(alpha=0.25)
 ```
 
-The kernel density estimates are generated with the Gaussian kernel and a bandwidth of `r round(bw.nrd0(x),2)`. The multimodal appearance eof the plot clearly shows that the data are overdispersed compared to a single Poisson, and instead appear to come from a mixture of two Poissons. 
+The kernel density estimates are generated with the Gaussian kernel and a bandwidth of `r round(bw.nrd0(x),2)`. The multimodal appearance of the plot clearly shows that the data are overdispersed compared to a single Poisson, and instead appear to come from a mixture of two Poissons. 
 
 Before minimising the negative log-likelihood, the final step is that we must apply a transformation of the parameters in order to fulfill the requirements that $\sum_i \delta_i = 1$, $\delta_i > 0$ and $\lambda_i > 0$ for all $i$. This is achieved by log-transforming $\lambda$ and logit transforming $\delta$.
 
@@ -382,7 +382,7 @@ pois.hmm.alpha <- function(x, gamma, delta = NULL)
     }
     alpha[[t]] = prevAlpha %*% gamma %*% PMat(x[t],lambdas)
   }
-  return(alpha[[n]])#return the last itertion
+  return(alpha[[n]])#return the last iteration
 }
 ```
 
@@ -434,11 +434,11 @@ In addition to this scaling solution, we also introduce two parameter transforma
 As an alternative to direct numerical maximisation, often times the Expectation-Maximisation meta-algorithm is employed. EM is known as a meta-algorithm because rather than prescribing an explicit set of steps, it provides a framework that needs to be customised depending on the context. In the context of HMM's it can be useful due to the fact that the likelihood is guaranteed to increase for each iteration, and also that derivatives are not required (e.g. an optimiser such as `nlm` in R is not required). On the downside however, more implementation effort is often required, and convergence can sometimes be slow to achieve.
 
 ##EM in General
-EM in general is an iterative scheme to find maximum likelihood estimates of parameters when some of the data are missing. Therefore by treating the hidden states of an HMM as those missing data, we can calculate what is known as the complete data log likelihood. The CDLL is the log likelihood of the parameters based on the observed and missing data
+EM in general is an iterative scheme to find maximum likelihood estimates of parameters when some of the data are missing. Therefore by treating the hidden states of an HMM as those missing data, we can calculate what is known as the complete data log likelihood. The CDLL is the log likelihood of the parameters based on the observed and missing data.
 
 The iterative scheme is as follows:
 
-- Choose the starting values of the parameters to be estimated
+- Choose the starting values of the parameters to be estimated.
 
 - E-Step: Compute the conditional expectations of those functions of the
 missing data that appear in the complete-data log-likelihood.
