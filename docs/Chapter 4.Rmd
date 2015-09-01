@@ -224,7 +224,7 @@ detach(clustersDf)
 
 #Fit HMM to data given inital values
 
-A standard approach for model selection in the HMM literature is via the use of information criteria such as Akaike or Bayesian Information Criteria (AIC and BIC respectively)@zucchini[pp. 89-92]. The theory of these criteria state that the model with the lowest number will be the one that most closely fits data, taking into account the theory of parsimony.  
+A standard approach for model selection in the HMM literature is via the use of information criteria such as Akaike or Bayesian Information Criteria (AIC and BIC respectively)@zucchini[pp. 89-92]. The theory of these criteria state that the model with the lowest number will be the one that most closely fits the data, taking into account the theory of parsimony.  
 
 These criteria are stated as:
 
@@ -233,7 +233,7 @@ $$\text{BIC } = -2 \text{ log } L + p \text{ log } T$$
 
 Where $L$ is the likelihood, $p$ is the number of parameters and $T$ is the number of observations.
 
-We generate AIC and BIC values for a variety of different states $m$ and make a model selection based off these calculation.
+We generate AIC and BIC values for a variety of different states $m$ and make a model selection based off these calculations.
 
 ```{r cache=TRUE, echo=FALSE, results='hide'}
 source('../code/hmmBivPois.R')
@@ -384,7 +384,7 @@ ggplot(df_melt, aes(x = Buckets, y = value)) +
 
 #Analyse Relationship Between Hidden States and VPIN
 
-The final step in our analysis is to make inferences about the rleationship between these decoded hidden states and the calculated VPIN metric. The hypothesis we are examining is whether there is a strong relationship between high VPIN values and private information-based trading. We challenge we face however is determining exactly what we are comparing.
+The final step in our analysis is to make inferences about the relationship between these decoded hidden states and the calculated VPIN metric. The hypothesis we are examining is whether there is a strong relationship between high VPIN values and private information-based trading. The challenge we face however is determining exactly what we are comparing.
 
 First we briefly repeat how VPIN is calculated. Trading activity is typically measured in time bars, that is a summary of the tick-by-tick activity within a particular time period, e.g. seconds, minutes, hours etc. As part of our simulation analysis up to this point we have created time series showing generated buys and sells aggregated by time bars. As explained in the introduction, due to the difficulties of classifying trading activity as either buy or sell in a high-frequency context, trade data is spliced up into volume bars and these bars are then probabilistically allocated as buys or sells by examining the price differentials within those volume bars. Once the probabilistic buy and sell amounts have been calculated per volume bar, the trading imbalances and hence the VPIN can be calculated. The missing piece of the analysis puzzle is hence how to associate the decoded hidden state of a time bar with the VPIN value of the volume bar. The following is our attempt to define that linkage. ^[The procedure is an extension of the algorithm found in Appendix 1.]
 
