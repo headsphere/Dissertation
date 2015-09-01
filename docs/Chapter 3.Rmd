@@ -90,7 +90,11 @@ By examining the original CDDL equation we introduced in \eqref{eq:cddl}, we can
   \end{aligned}
 \end{align}
 
+<<<<<<< HEAD
 First we extend the original indicator variables \marginnote{Confusingly, Zucchini \& MacDonald 2009 re-use the notation $u_j$ which has already been used to denote the unconditional state distribution}:
+=======
+First we extend the original indicator variables \marginnote{Confusingly, Zucchini & MacDonald 2009 re-use the notation $u_j$ which has already been used to denote the unconditional state distribution}:
+>>>>>>> 6edf5e4a190b3a49211fdb990f9c41b0265c602b
 
 \begin{align}
   \begin{aligned}\nonumber
