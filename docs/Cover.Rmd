@@ -1,5 +1,5 @@
 ---
-title: “A Hidden Markov Model Approach to Estimating VPIN”
+title: “A Hidden Markov Model Approach to Evaluating VPIN”
 header-includes:
    - \usepackage[]{algpseudocode}
    - \usepackage[]{verbatim}
@@ -18,7 +18,10 @@ options(digits = 3)
 
 # This is also a good place to setup any ggplot2 themes for the document using ggplot2::theme_set()
 ```
+\clearpage
 
+```{r child = 'Preamble.Rmd'}
+```
 \clearpage
 
 ```{r child = 'Chapter 1.Rmd'}

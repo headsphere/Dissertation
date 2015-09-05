@@ -1,0 +1,18 @@
+\chapter*{Abstract}
+This paper attempts to investigate the predictive power of Volume-Synchronised Probability of Information-Based Trading (VPIN), a proposed order toxicity metric, on liquidity crises. By building on and extending previous work on the Probability of Information-Based Trading (PIN), we attempt to use Hidden Markov Models to classify order flow as being in one of several hidden market states, differentiating between public and private-information states. We then attempt to bridge the gap between clock-time and volume-time trade classification methods in order to gauge the relationship between hidden market states and VPIN. 
+
+To do this we lay out the mathematical foundations and the theoretical model of both PIN and VPIN and conduct a simulation study in order to illustrate the key financial and mathematical concepts. Finally we analyse intraday trade and quote data from the May 2010 Flash Crash in order to test our mathematical and financial model.
+
+\chapter*{Declaration}
+
+This project is submitted under University of London regulations as part of examination requirements for the MSc degree in Applied Statistics and Stochastic Modelling. Any quotation or excerpt from the published or unpublished work of other persons is explicitly indicated and in each such instance a full reference of the source of such work is given. I have read and understood the requirements of the Birkbeck College Examinations Instructions to Candidates, including the relevant University of London regulations on Examination Tests and in accordance with those requirements submit this work as my own. 
+
+
+\vspace{20mm} 
+
+
+SIGNATURE: _________________________   
+\vspace{5mm}
+
+DATE: _____________________________
+
